@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compare Schools — Scholr</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ═══════════════════════════════════════════
+       NAVBAR
+  ═══════════════════════════════════════════ -->
+  <header class="navbar" id="navbar">
+    <div class="container navbar__inner">
+      <a href="index.html" class="navbar__logo">Scholr</a>
+      <nav class="navbar__links" id="nav-links">
+        <a href="index.html#listings" class="nav-link">Explore</a>
+        <a href="saved.html" class="nav-link">Saved</a>
+        <a href="index.html#about" class="nav-link">About</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="compare-page" id="compare-page">
+    <div class="container" style="padding-top: 40px; padding-bottom: 80px;">
+      <div class="school-detail-header">
+        <a href="index.html" class="btn btn--ghost back-btn">← Back to Schools</a>
+      </div>
+      <h1 class="compare-title">Compare Schools</h1>
+      
+      <div id="compare-container" class="compare-grid fade-in">
+         <!-- Details will be loaded here -->
+         <div class="loading-skeleton" style="width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
+           <div class="skeleton-card" style="height: 400px; width: 100%;"></div>
+           <div class="skeleton-card" style="height: 400px; width: 100%;"></div>
+         </div>
+      </div>
+      
+      <div id="compare-error-state" class="empty-state" style="display: none;">
+        <div class="empty-state__icon">⚠️</div>
+        <h3 class="empty-state__title">Comparison Error</h3>
+        <p class="empty-state__sub" id="compare-error-msg">Please select at least 2 schools to compare.</p>
+        <br>
+        <a href="index.html" class="btn btn--primary">Return to Explore</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════ -->
+  <footer class="footer" id="footer">
+    <div class="container footer__inner">
+      <span class="footer__brand">Scholr</span>
+      <p class="footer__copy">© 2026 Scholr. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="compare.js"></script>
+</body>
+</html>

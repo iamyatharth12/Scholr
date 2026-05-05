@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saved Schools — Scholr</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       NAVBAR
+  ═══════════════════════════════════════════ -->
+  <header class="navbar" id="navbar">
+    <div class="container navbar__inner">
+      <a href="index.html" class="navbar__logo">Scholr</a>
+      <nav class="navbar__links" id="nav-links">
+        <a href="index.html#listings" class="nav-link">Explore</a>
+        <a href="saved.html" class="nav-link" style="color: var(--clr-blue-600); border-bottom: 2px solid var(--clr-blue-600);">Saved</a>
+        <a href="index.html#about" class="nav-link">About</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="listings-section" id="listings">
+      <div class="container">
+        <div class="listings__header">
+          <h2 class="listings__title">Saved Schools</h2>
+          <span class="listings__count" id="listings-count">0 schools found</span>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" style="display: none;">Loading schools...</div>
+
+        <!-- School Cards Grid — populated dynamically by supabase.js -->
+        <div class="cards-grid" id="cards-grid" style="display: none;"></div>
+
+        <!-- Empty State (hidden by default) -->
+        <div class="empty-state" id="empty-state" hidden aria-live="polite">
+          <div class="empty-state__icon">⭐</div>
+          <h3 class="empty-state__title">No saved schools</h3>
+          <p class="empty-state__sub">You haven't saved any schools yet. Go back to explore and save your favorites.</p>
+          <a href="index.html" class="btn btn--primary" id="reset-btn">Explore Schools</a>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════ -->
+  <footer class="footer" id="footer">
+    <div class="container footer__inner">
+      <span class="footer__brand">Scholr</span>
+      <p class="footer__copy">© 2026 Scholr. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Supabase JS client (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Scholr DB integration -->
+  <script src="supabase.js"></script>
+  <!-- Init -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      window.Scholr.loadSavedSchools();
+    });
+  </script>
+</body>
+</html>
