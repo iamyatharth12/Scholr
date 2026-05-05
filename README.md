@@ -98,7 +98,7 @@ This is an early-stage project. Suggestions and improvements are welcome.
 
 For feedback or collaboration:
 
-* Email: [your-email@example.com](mailto:bhoni.geet@gmail.com)
+* Email: [bhoni.geet@gmail.com](mailto:bhoni.geet@gmail.com)
 
 ---
 
