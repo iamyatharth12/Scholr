@@ -1,13 +1,14 @@
 /* ─────────────────────────────────────────────────────────
    supabase.js  —  Scholr × Supabase integration
    ─────────────────────────────────────────────────────────
-   IMPORTANT: Replace the two placeholder values below with
-   your real project credentials from:
-   Supabase Dashboard → Settings → API
+   Includes School Intelligence Layer:
+     • best_for tags
+     • fee_category badge
+     • smart_summary excerpt on cards
 ───────────────────────────────────────────────────────── */
 
-const SUPABASE_URL = "https://lztyxkarclzixfijrtgg.supabase.co";   // e.g. https://xyzxyz.supabase.co
-const SUPABASE_ANON = 'sb_publishable_DKOQknUlDD8tH-NhGPXKCg_gqIO7Tlu';      // anon / public key only
+const SUPABASE_URL  = "https://lztyxkarclzixfijrtgg.supabase.co";
+const SUPABASE_ANON = 'sb_publishable_DKOQknUlDD8tH-NhGPXKCg_gqIO7Tlu';
 
 /* ── Client init ─────────────────────────────────────── */
 if (!window.supabase) {
@@ -16,17 +17,15 @@ if (!window.supabase) {
 const { createClient } = window.supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
-/* ── DOM refs (shared with app.js) ──────────────────── */
-const cardsGrid = document.getElementById('cards-grid');
+/* ── DOM refs ────────────────────────────────────────── */
+const cardsGrid  = document.getElementById('cards-grid');
 const emptyState = document.getElementById('empty-state');
 const countBadge = document.getElementById('listings-count');
 
-/* ── Saved Schools State ───────────────────────────────────── */
-let savedSchools = JSON.parse(localStorage.getItem("savedSchools")) || [];
+/* ── Saved Schools State ─────────────────────────────── */
+let savedSchools = JSON.parse(localStorage.getItem('savedSchools')) || [];
 
-function isSaved(id) {
-  return savedSchools.includes(String(id));
-}
+function isSaved(id) { return savedSchools.includes(String(id)); }
 
 function toggleSave(id) {
   const strId = String(id);
@@ -35,7 +34,7 @@ function toggleSave(id) {
   } else {
     savedSchools.push(strId);
   }
-  localStorage.setItem("savedSchools", JSON.stringify(savedSchools));
+  localStorage.setItem('savedSchools', JSON.stringify(savedSchools));
   return isSaved(strId);
 }
 
@@ -45,10 +44,8 @@ const compareBar = document.getElementById('compare-bar');
 const compareBtn = document.getElementById('compare-btn');
 
 function updateCompareBar() {
-  const bar = document.getElementById("compare-bar");
-  const countText = document.getElementById("selected-count");
-
-  console.log("Selected:", selectedSchools); // debug
+  const bar       = document.getElementById('compare-bar');
+  const countText = document.getElementById('selected-count');
 
   if (selectedSchools.length > 0) {
     bar.style.setProperty('display', 'flex', 'important');
@@ -58,13 +55,8 @@ function updateCompareBar() {
     bar.style.setProperty('display', 'none', 'important');
   }
 
-  const allCheckboxes = document.querySelectorAll('.compare-checkbox');
-  allCheckboxes.forEach(cb => {
-    if (!cb.checked && selectedSchools.length >= 3) {
-      cb.disabled = true;
-    } else {
-      cb.disabled = false;
-    }
+  document.querySelectorAll('.compare-checkbox').forEach(cb => {
+    cb.disabled = !cb.checked && selectedSchools.length >= 3;
   });
 }
 
@@ -80,25 +72,82 @@ if (compareBtn) {
    HELPERS
 ───────────────────────────────────────────────────────── */
 
-/** Map board string → CSS modifier class */
+const safe = str => String(str ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 function boardClass(board) {
   const map = { CBSE: 'cbse', ICSE: 'icse', State: 'state', IB: 'ib' };
   return map[board] ?? 'cbse';
 }
 
-/** Map tag string → CSS modifier class */
 function tagClass(tag) {
   const t = tag.toLowerCase();
   if (t.includes('top rated')) return 'tag--top';
-  if (t.includes('popular')) return 'tag--popular';
-  if (t.includes('budget')) return 'tag--budget';
-  if (t.includes('closest') ||
-    t.includes('multi') ||
-    t.includes('branch')) return 'tag--nearby';
-  return 'tag--legacy';   // fallback: purple pill for anything else
+  if (t.includes('popular'))   return 'tag--popular';
+  if (t.includes('budget'))    return 'tag--budget';
+  if (t.includes('closest') || t.includes('multi') || t.includes('branch')) return 'tag--nearby';
+  return 'tag--legacy';
 }
 
-/** Build a single card's HTML string from a Supabase row */
+/**
+ * Derive a fee category from the fees string if not stored in DB.
+ * Returns: 'Budget Friendly' | 'Mid Range' | 'Premium'
+ */
+function inferFeeCategory(feesStr) {
+  if (!feesStr) return null;
+  const match = feesStr.match(/₹?([\d.]+)(k|L)/i);
+  if (!match) return null;
+  const value = parseFloat(match[1]) * (match[2].toLowerCase() === 'l' ? 100 : 1);
+  if (value < 25)  return 'Budget Friendly';
+  if (value <= 75) return 'Mid Range';
+  return 'Premium';
+}
+
+/** Classify a fee string into low / medium / high (for filter logic) */
+function feeTierOf(feesStr) {
+  if (!feesStr) return 'medium';
+  const match = feesStr.match(/₹?([\d.]+)(k|L)/i);
+  if (!match) return 'medium';
+  const value = parseFloat(match[1]) * (match[2].toLowerCase() === 'l' ? 100 : 1);
+  if (value < 30)  return 'low';
+  if (value <= 80) return 'medium';
+  return 'high';
+}
+
+/** CSS modifier for fee category */
+function feeCategoryClass(cat) {
+  if (!cat) return '';
+  const c = cat.toLowerCase();
+  if (c.includes('budget')) return 'fee--budget';
+  if (c.includes('mid'))    return 'fee--mid';
+  if (c.includes('premium')) return 'fee--premium';
+  return '';
+}
+
+/** CSS modifier + label for Best For tags */
+function bestForClass(tag) {
+  const t = tag.toLowerCase();
+  if (t.includes('academic'))   return 'bf--academic';
+  if (t.includes('budget'))     return 'bf--budget';
+  if (t.includes('sport'))      return 'bf--sport';
+  if (t.includes('campus'))     return 'bf--campus';
+  if (t.includes('discipline')) return 'bf--discipline';
+  if (t.includes('infra') || t.includes('modern')) return 'bf--infra';
+  if (t.includes('transport'))  return 'bf--transport';
+  return 'bf--default';
+}
+
+/** Build "Best For" pills HTML */
+function buildBestForHTML(bestFor) {
+  if (!bestFor || bestFor.length === 0) return '';
+  return bestFor
+    .map(t => `<span class="best-for-tag ${bestForClass(t)}">${safe(t)}</span>`)
+    .join('');
+}
+
+/* ─────────────────────────────────────────────────────────
+   BUILD CARD
+───────────────────────────────────────────────────────── */
+
 function buildCardHTML(school, index = 0) {
   const boardKey = boardClass(school.board);
 
@@ -108,14 +157,25 @@ function buildCardHTML(school, index = 0) {
 
   const hasRating = school.rating != null;
 
-  // Sanitise text to avoid XSS in template literals
-  const safe = str => String(str ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  /* Fee category — prefer DB value, fall back to inference */
+  const feeCategory = school.fee_category || inferFeeCategory(school.fees);
+  const feeCatHTML  = feeCategory
+    ? `<span class="fee-category-badge ${feeCategoryClass(feeCategory)}">${safe(feeCategory)}</span>`
+    : '';
+
+  /* Best For tags */
+  const bestForHTML = buildBestForHTML(school.best_for);
+
+  /* Smart Summary — show a short excerpt (first 100 chars) */
+  const summaryExcerpt = school.smart_summary
+    ? `<p class="card__summary">${safe(school.smart_summary.slice(0, 105))}${school.smart_summary.length > 105 ? '…' : ''}</p>`
+    : '';
 
   return `
     <article class="school-card card-enter" style="animation-delay: ${index * 0.05}s;" tabindex="0" aria-label="${safe(school.name)}">
       <div class="card__top">
         <div class="card__avatar" style="background:var(--clr-blue-50)">🏫</div>
-        <div style="display: flex; gap: 8px; align-items: center;">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
           <button class="btn btn--ghost save-btn" data-id="${school.id}" style="padding: 6px 10px; font-size: 0.75rem;" aria-label="${isSaved(school.id) ? 'Saved' : 'Save'}">
             ${isSaved(school.id) ? '★ Saved' : '☆ Save'}
           </button>
@@ -148,10 +208,14 @@ function buildCardHTML(school, index = 0) {
           <span class="rating__count">User rating</span>
         </div>` : ''}
 
+      ${summaryExcerpt}
+
       <div class="card__meta">
         <span class="meta-chip">${safe(school.fees ?? '—')}</span>
-        <span class="meta-chip">${safe(school.board)} Board</span>
+        ${feeCatHTML}
       </div>
+
+      ${bestForHTML ? `<div class="card__best-for">${bestForHTML}</div>` : ''}
 
       <button class="btn btn--outline card__cta"
               data-id="${school.id}"
@@ -165,16 +229,11 @@ function buildCardHTML(school, index = 0) {
    RENDER
 ───────────────────────────────────────────────────────── */
 
-/**
- * renderSchools(data)
- * Clears the grid, builds cards from Supabase rows, appends them,
- * and wires up CTA buttons.
- */
 function renderSchools(data) {
   const loadingDiv = document.getElementById('loading-state');
   if (loadingDiv) loadingDiv.style.display = 'none';
 
-  cardsGrid.innerHTML = ''; // clear container before re-render
+  cardsGrid.innerHTML = '';
 
   if (!data || data.length === 0) {
     cardsGrid.style.display = 'none';
@@ -187,22 +246,19 @@ function renderSchools(data) {
   cardsGrid.style.display = '';
   countBadge.textContent = `${data.length} school${data.length !== 1 ? 's' : ''} found`;
 
-  const html = data.map((school, i) => buildCardHTML(school, i)).join('');
-  cardsGrid.innerHTML = html;
+  cardsGrid.innerHTML = data.map((school, i) => buildCardHTML(school, i)).join('');
 
-  // Wire CTA buttons
+  /* Wire CTA buttons */
   cardsGrid.querySelectorAll('.card__cta').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      window.location.href = `school.html?id=${id}`;
+      window.location.href = `school.html?id=${btn.dataset.id}`;
     });
   });
 
-  // Wire Save buttons
+  /* Wire Save buttons */
   cardsGrid.querySelectorAll('.save-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      // prevent opening compare or school detail if overlapping
-      e.stopPropagation(); 
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
       const id = btn.dataset.id;
       const isNowSaved = toggleSave(id);
       btn.innerHTML = isNowSaved ? '★ Saved' : '☆ Save';
@@ -210,23 +266,21 @@ function renderSchools(data) {
     });
   });
 
-function selectSchool(id) {
-  if (!selectedSchools.includes(id)) {
-    if (selectedSchools.length < 3) {
+  function selectSchool(id) {
+    if (!selectedSchools.includes(id) && selectedSchools.length < 3) {
       selectedSchools.push(id);
     }
+    updateCompareBar();
   }
-  updateCompareBar();
-}
 
-function deselectSchool(id) {
-  selectedSchools = selectedSchools.filter(s => s !== id);
-  updateCompareBar();
-}
+  function deselectSchool(id) {
+    selectedSchools = selectedSchools.filter(s => s !== id);
+    updateCompareBar();
+  }
 
-  // Wire compare checkboxes
+  /* Wire compare checkboxes */
   cardsGrid.querySelectorAll('.compare-checkbox').forEach(cb => {
-    cb.addEventListener('change', (e) => {
+    cb.addEventListener('change', e => {
       const id = String(e.target.dataset.id);
       if (e.target.checked) {
         if (selectedSchools.length < 3) {
@@ -247,10 +301,6 @@ function deselectSchool(id) {
    FETCH — all schools
 ───────────────────────────────────────────────────────── */
 
-/**
- * fetchSchools()
- * Retrieves every row from the schools table, ordered by rating desc.
- */
 async function fetchSchools() {
   showLoadingState();
 
@@ -259,35 +309,8 @@ async function fetchSchools() {
     .select('*')
     .order('rating', { ascending: false });
 
-  console.log('[Scholr] fetchSchools data:', data);
-
   if (error) {
     console.error('[Scholr] Supabase fetch error:', error);
-    showErrorState(error.message);
-    return;
-  }
-
-  renderSchools(data);
-}
-
-/* ─────────────────────────────────────────────────────────
-   FETCH — filtered by board
-───────────────────────────────────────────────────────── */
-
-/**
- * filterByBoard(board)
- * Pass an empty string / null to fetch all boards.
- */
-async function filterByBoard(board) {
-  showLoadingState();
-
-  let query = db.from('schools').select('*').order('rating', { ascending: false });
-  if (board) query = query.ilike('board', board);
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('[Scholr] Supabase filter error:', error.message);
     showErrorState(error.message);
     return;
   }
@@ -299,13 +322,15 @@ async function filterByBoard(board) {
    FETCH — filtered by board + fee tier
 ───────────────────────────────────────────────────────── */
 
-/**
- * filterSchools({ board, fee })
- * Combines board and fee filters in a single Supabase call.
- * fee should match the stored 'fees' column value prefix or pass '' for any.
- * Because fees are stored as display strings (e.g. "₹30k–₹80k/yr"), we
- * filter client-side for fee tier after fetching board-filtered rows.
- */
+async function filterByBoard(board) {
+  showLoadingState();
+  let query = db.from('schools').select('*').order('rating', { ascending: false });
+  if (board) query = query.ilike('board', board);
+  const { data, error } = await query;
+  if (error) { showErrorState(error.message); return; }
+  renderSchools(data);
+}
+
 async function filterSchools({ board = '', fee = '' } = {}) {
   showLoadingState();
 
@@ -313,34 +338,15 @@ async function filterSchools({ board = '', fee = '' } = {}) {
   if (board) query = query.ilike('board', board);
 
   const { data, error } = await query;
+  if (error) { showErrorState(error.message); return; }
 
-  if (error) {
-    console.error('[Scholr] Supabase filter error:', error.message);
-    showErrorState(error.message);
-    return;
-  }
-
-  // Client-side fee tier filter
   const feeTierMap = {
-    low: s => feeTierOf(s.fees) === 'low',
+    low:    s => feeTierOf(s.fees) === 'low',
     medium: s => feeTierOf(s.fees) === 'medium',
-    high: s => feeTierOf(s.fees) === 'high',
+    high:   s => feeTierOf(s.fees) === 'high',
   };
   const filtered = fee && feeTierMap[fee] ? data.filter(feeTierMap[fee]) : data;
-
   renderSchools(filtered);
-}
-
-/** Classify a fee string into low / medium / high */
-function feeTierOf(feesStr) {
-  if (!feesStr) return 'medium';
-  // Extract the lower bound number (digits before first 'k' or 'L')
-  const match = feesStr.match(/₹?([\d.]+)(k|L)/i);
-  if (!match) return 'medium';
-  const value = parseFloat(match[1]) * (match[2].toLowerCase() === 'l' ? 100 : 1); // in thousands
-  if (value < 30) return 'low';
-  if (value <= 80) return 'medium';
-  return 'high';
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -351,7 +357,6 @@ function showLoadingState() {
   cardsGrid.style.display = 'none';
   emptyState.hidden = true;
   countBadge.textContent = 'Loading...';
-  
   const loadingDiv = document.getElementById('loading-state');
   if (loadingDiv) loadingDiv.style.display = 'block';
 }
@@ -359,31 +364,21 @@ function showLoadingState() {
 function showErrorState(msg) {
   const loadingDiv = document.getElementById('loading-state');
   if (loadingDiv) loadingDiv.style.display = 'none';
-
   cardsGrid.style.display = 'none';
   emptyState.hidden = false;
   emptyState.querySelector('.empty-state__title').textContent = 'Could not load schools';
   emptyState.querySelector('.empty-state__sub').textContent =
-    `Oops, something went wrong fetching the data. Please try again later.`;
+    'Oops, something went wrong fetching the data. Please try again later.';
   countBadge.textContent = 'Error';
 }
 
 /* ─────────────────────────────────────────────────────────
-   FETCH — search schools
+   FETCH — search
 ───────────────────────────────────────────────────────── */
 
-/**
- * searchSchools(queryStr)
- * Performs a case-insensitive search across name and location.
- */
 async function searchSchools(queryStr) {
-  // Sanitize input: remove commas and percentages which break the Supabase .or() string parser
   const safeQuery = queryStr.replace(/[,%]/g, '').trim();
-
-  if (!safeQuery) {
-    renderSchools([]);
-    return;
-  }
+  if (!safeQuery) { renderSchools([]); return; }
 
   showLoadingState();
 
@@ -393,12 +388,7 @@ async function searchSchools(queryStr) {
     .or(`name.ilike.%${safeQuery}%,location.ilike.%${safeQuery}%`)
     .order('rating', { ascending: false });
 
-  if (error) {
-    console.error('[Scholr] Supabase search error:', error.message);
-    showErrorState(error.message);
-    return;
-  }
-
+  if (error) { showErrorState(error.message); return; }
   renderSchools(data);
 }
 
@@ -406,16 +396,8 @@ async function searchSchools(queryStr) {
    FETCH — saved schools
 ───────────────────────────────────────────────────────── */
 
-/**
- * loadSavedSchools()
- * Fetches only the schools matching saved IDs.
- */
 async function loadSavedSchools() {
-  if (savedSchools.length === 0) {
-    renderSchools([]);
-    return;
-  }
-
+  if (savedSchools.length === 0) { renderSchools([]); return; }
   showLoadingState();
 
   const { data, error } = await db
@@ -424,16 +406,26 @@ async function loadSavedSchools() {
     .in('id', savedSchools)
     .order('rating', { ascending: false });
 
-  if (error) {
-    console.error('[Scholr] Supabase fetch error:', error);
-    showErrorState(error.message);
-    return;
-  }
-
+  if (error) { showErrorState(error.message); return; }
   renderSchools(data);
 }
 
 /* ─────────────────────────────────────────────────────────
-   EXPORTS (global, for use by app.js)
+   EXPORTS
 ───────────────────────────────────────────────────────── */
-window.Scholr = { fetchSchools, renderSchools, filterByBoard, filterSchools, searchSchools, loadSavedSchools, toggleSave, isSaved };
+window.Scholr = {
+  fetchSchools,
+  renderSchools,
+  filterByBoard,
+  filterSchools,
+  searchSchools,
+  loadSavedSchools,
+  toggleSave,
+  isSaved,
+  /* expose helpers for compare.js re-use */
+  inferFeeCategory,
+  feeCategoryClass,
+  buildBestForHTML,
+  bestForClass,
+  safe,
+};

@@ -92,6 +92,37 @@ function tagClass(tag) {
   return 'tag--legacy';
 }
 
+function inferFeeCategory(feesStr) {
+  if (!feesStr) return null;
+  const m = feesStr.match(/₹?([\d.]+)(k|L)/i);
+  if (!m) return null;
+  const v = parseFloat(m[1]) * (m[2].toLowerCase() === 'l' ? 100 : 1);
+  if (v < 25)  return 'Budget Friendly';
+  if (v <= 75) return 'Mid Range';
+  return 'Premium';
+}
+
+function feeCategoryClass(cat) {
+  if (!cat) return '';
+  const c = cat.toLowerCase();
+  if (c.includes('budget'))  return 'fee--budget';
+  if (c.includes('mid'))     return 'fee--mid';
+  if (c.includes('premium')) return 'fee--premium';
+  return '';
+}
+
+function bestForClass(tag) {
+  const t = tag.toLowerCase();
+  if (t.includes('academic'))   return 'bf--academic';
+  if (t.includes('budget'))     return 'bf--budget';
+  if (t.includes('sport'))      return 'bf--sport';
+  if (t.includes('campus'))     return 'bf--campus';
+  if (t.includes('discipline')) return 'bf--discipline';
+  if (t.includes('infra') || t.includes('modern')) return 'bf--infra';
+  if (t.includes('transport'))  return 'bf--transport';
+  return 'bf--default';
+}
+
 /* Map each facility name to an SVG icon */
 const FACILITY_ICONS = {
   'smart class':   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
@@ -175,6 +206,23 @@ function renderSchool(school) {
 
   const hasContactActions = websiteBtn || phoneBtn || mapsBtn || emailBtn;
 
+  /* --- Fee category --- */
+  const feeCategory = school.fee_category || inferFeeCategory(school.fees);
+  const feeCatHTML  = feeCategory
+    ? `<span class="fee-category-badge ${feeCategoryClass(feeCategory)}">${safe(feeCategory)}</span>`
+    : '';
+
+  /* --- Best For --- */
+  const bestForTags = school.best_for && school.best_for.length > 0 ? school.best_for : [];
+  const bestForHTML = bestForTags.length
+    ? `<div class="detail__best-for">
+        ${bestForTags.map(t => `<span class="best-for-tag ${bestForClass(t)}">${safe(t)}</span>`).join('')}
+       </div>`
+    : '';
+
+  /* --- Smart summary (used in About section) --- */
+  const aboutText = school.smart_summary || description;
+
   /* --- Admission status --- */
   const admissionsOpen = school.admissions_open;
   let admissionBadge = '';
@@ -246,6 +294,11 @@ function renderSchool(school) {
           <span class="stat-label">Annual Fees</span>
           <span class="stat-value">${safe(school.fees ?? '—')}</span>
         </div>
+        ${feeCategory ? `
+        <div class="detail__stat">
+          <span class="stat-label">Fee Category</span>
+          <span class="stat-value">${feeCatHTML}</span>
+        </div>` : ''}
         ${hasRating ? `
         <div class="detail__stat">
           <span class="stat-label">Rating</span>
@@ -271,10 +324,18 @@ function renderSchool(school) {
       </div>
       <hr class="detail__divider">` : ''}
 
+      <!-- ── BEST FOR ─────────────────────────────── -->
+      ${bestForHTML ? `
+      <div class="detail__section">
+        <h2 class="section-heading">Best For</h2>
+        ${bestForHTML}
+      </div>
+      <hr class="detail__divider">` : ''}
+
       <!-- ── ABOUT ──────────────────────────────── -->
       <div class="detail__section detail__about">
         <h2 class="section-heading">About the School</h2>
-        <p>${safe(description)}</p>
+        <p>${safe(aboutText)}</p>
       </div>
 
       <hr class="detail__divider">

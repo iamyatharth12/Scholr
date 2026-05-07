@@ -1518,3 +1518,92 @@ body {
   font-size: 0.95rem;
   line-height: 1.6;
 }
+
+/* ═══════════════════════════════════════════
+   SCHOOL INTELLIGENCE LAYER
+   fee category · best for · smart summary
+═══════════════════════════════════════════ */
+
+/* ── Fee Category Badge ─────────────────── */
+.fee-category-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 100px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.fee--budget  { background: #dcfce7; color: #15803d; }
+.fee--mid     { background: #dbeafe; color: #1e40af; }
+.fee--premium { background: #fef3c7; color: #92400e; }
+
+/* ── Best For Pills ─────────────────────── */
+.best-for-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 100px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.bf--academic   { background: #ede9fe; color: #5b21b6; }
+.bf--budget     { background: #dcfce7; color: #15803d; }
+.bf--sport      { background: #ffedd5; color: #c2410c; }
+.bf--campus     { background: #e0f2fe; color: #0369a1; }
+.bf--discipline { background: #fce7f3; color: #9d174d; }
+.bf--infra      { background: #f0f9ff; color: #0c4a6e; }
+.bf--transport  { background: #f3f4f6; color: #374151; }
+.bf--default    { background: #f1f5f9; color: #475569; }
+
+/* ── Best For containers ────────────────── */
+.card__best-for {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.detail__best-for {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.compare__best-for {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+/* ── Smart Summary on Cards ─────────────── */
+.card__summary {
+  font-size: 0.815rem;
+  color: var(--clr-text-secondary);
+  line-height: 1.55;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Smart Summary on Compare Page ─────── */
+.compare__summary {
+  font-size: 0.875rem;
+  color: var(--clr-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: var(--clr-bg);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--clr-blue-500);
+}
+
