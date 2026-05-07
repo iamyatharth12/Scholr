@@ -94,12 +94,26 @@ function tagClass(tag) {
 
 function inferFeeCategory(feesStr) {
   if (!feesStr) return null;
-  const m = feesStr.match(/₹?([\d.]+)(k|L)/i);
-  if (!m) return null;
-  const v = parseFloat(m[1]) * (m[2].toLowerCase() === 'l' ? 100 : 1);
-  if (v < 25)  return 'Budget Friendly';
-  if (v <= 75) return 'Mid Range';
-  return 'Premium';
+
+  // Format 1: shorthand  (₹40k, ₹1.5L)
+  const short = feesStr.match(/₹?([\d.]+)(k|L)/i);
+  if (short) {
+    const v = parseFloat(short[1]) * (short[2].toLowerCase() === 'l' ? 100 : 1);
+    if (v < 40)   return 'Budget Friendly';
+    if (v <= 120) return 'Mid Range';
+    return 'Premium';
+  }
+
+  // Format 2: full Indian number  (₹1,00,000 - ₹1,50,000)
+  const full = feesStr.match(/₹?(\d[\d,]+)/);
+  if (full) {
+    const v = parseInt(full[1].replace(/,/g, ''), 10);
+    if (v < 40000)   return 'Budget Friendly';
+    if (v <= 120000) return 'Mid Range';
+    return 'Premium';
+  }
+
+  return null;
 }
 
 function feeCategoryClass(cat) {

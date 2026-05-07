@@ -90,27 +90,56 @@ function tagClass(tag) {
 
 /**
  * Derive a fee category from the fees string if not stored in DB.
+ * Handles both formats:
+ *   Shorthand:  ₹40k–₹70k/yr  or  ₹1.5L–₹2.5L/yr
+ *   Full nums:  ₹1,00,000 - ₹1,50,000
  * Returns: 'Budget Friendly' | 'Mid Range' | 'Premium'
  */
 function inferFeeCategory(feesStr) {
   if (!feesStr) return null;
-  const match = feesStr.match(/₹?([\d.]+)(k|L)/i);
-  if (!match) return null;
-  const value = parseFloat(match[1]) * (match[2].toLowerCase() === 'l' ? 100 : 1);
-  if (value < 25)  return 'Budget Friendly';
-  if (value <= 75) return 'Mid Range';
-  return 'Premium';
+
+  // Format 1: shorthand  (₹40k, ₹1.5L)
+  const short = feesStr.match(/₹?([\d.]+)(k|L)/i);
+  if (short) {
+    const v = parseFloat(short[1]) * (short[2].toLowerCase() === 'l' ? 100 : 1); // in thousands
+    if (v < 40)  return 'Budget Friendly';
+    if (v <= 120) return 'Mid Range';
+    return 'Premium';
+  }
+
+  // Format 2: full Indian number  (₹1,00,000)
+  const full = feesStr.match(/₹?(\d[\d,]+)/);
+  if (full) {
+    const v = parseInt(full[1].replace(/,/g, ''), 10); // in rupees
+    if (v < 40000)   return 'Budget Friendly';
+    if (v <= 120000) return 'Mid Range';
+    return 'Premium';
+  }
+
+  return null;
 }
 
 /** Classify a fee string into low / medium / high (for filter logic) */
 function feeTierOf(feesStr) {
   if (!feesStr) return 'medium';
-  const match = feesStr.match(/₹?([\d.]+)(k|L)/i);
-  if (!match) return 'medium';
-  const value = parseFloat(match[1]) * (match[2].toLowerCase() === 'l' ? 100 : 1);
-  if (value < 30)  return 'low';
-  if (value <= 80) return 'medium';
-  return 'high';
+
+  const short = feesStr.match(/₹?([\d.]+)(k|L)/i);
+  if (short) {
+    const v = parseFloat(short[1]) * (short[2].toLowerCase() === 'l' ? 100 : 1);
+    if (v < 30)  return 'low';
+    if (v <= 80) return 'medium';
+    return 'high';
+  }
+
+  const full = feesStr.match(/₹?(\d[\d,]+)/);
+  if (full) {
+    const v = parseInt(full[1].replace(/,/g, ''), 10);
+    if (v < 30000)  return 'low';
+    if (v <= 80000) return 'medium';
+    return 'high';
+  }
+
+  return 'medium';
 }
 
 /** CSS modifier for fee category */
