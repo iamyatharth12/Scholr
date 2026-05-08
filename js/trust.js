@@ -158,11 +158,11 @@
   }
 
   /* ─────────────────────────────────────────────────────────
-     PUBLIC API: renderTransparencyMessage(level, dataNotes)
+     PUBLIC API: renderTransparencyMessage(level, dataNotes, opts)
      Returns an HTML block for the transparency notice.
      Returns '' when level is verified and no dataNotes provided.
   ───────────────────────────────────────────────────────── */
-  function renderTransparencyMessage(level, dataNotes) {
+  function renderTransparencyMessage(level, dataNotes, opts = {}) {
     const key = normalizeLevel(level);
     const cfg  = key ? VERIFICATION_CONFIG[key] : null;
 
@@ -171,7 +171,8 @@
     if (!msg) return '';
 
     const isWarning = key === 'limited';
-    const cssClass  = isWarning ? 'transparency-note transparency-note--warn' : 'transparency-note';
+    let cssClass  = isWarning ? 'transparency-note transparency-note--warn' : 'transparency-note';
+    if (opts.compact) cssClass += ' transparency-note--compact';
 
     const iconSvg = isWarning
       ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none"
@@ -265,6 +266,16 @@
 
     const freshnessHTML = `
       <div class="trust-meta-row">
+        ${school.claimed_by_school ? `
+        <div class="trust-meta-item">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          <span style="color:var(--clr-blue-600);font-weight:500;">Profile Claimed</span>
+        </div>` : ''}
         ${updatedLabel ? `
         <div class="trust-meta-item">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"

@@ -150,8 +150,9 @@ function renderCompare(schools) {
       
     const verificationHTML = window.ScholrTrust ? window.ScholrTrust.getVerificationBadge(school.verification_level) : '';
     const freshnessHTML    = window.ScholrTrust ? window.ScholrTrust.renderFreshnessChip(school.updated_at, school.last_verified_at) : '';
-    const trustRowHTML     = (verificationHTML || freshnessHTML)
-      ? `<div class="compare__trust-row">${verificationHTML}${freshnessHTML}</div>`
+    const transparencyNoticeHTML = window.ScholrTrust ? window.ScholrTrust.renderTransparencyMessage(school.verification_level, school.data_notes, { compact: true }) : '';
+    const trustRowHTML     = (verificationHTML || freshnessHTML || transparencyNoticeHTML)
+      ? `<div class="compare__trust-row">${verificationHTML}${freshnessHTML}${transparencyNoticeHTML}</div>`
       : '';
 
     return `

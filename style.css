@@ -1706,6 +1706,20 @@ body {
   line-height: 1.5;
 }
 
+.transparency-note--compact {
+  padding: 6px 10px;
+  margin-top: 6px;
+}
+
+.transparency-note--compact .transparency-note__text {
+  font-size: 0.72rem;
+}
+
+.transparency-note--compact .transparency-note__icon svg {
+  width: 12px;
+  height: 12px;
+}
+
 /* ── Trust Section (detail page full block) ─────────────── */
 .detail__trust-header {
   display: flex;

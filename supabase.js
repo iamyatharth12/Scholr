@@ -203,9 +203,10 @@ function buildCardHTML(school, index = 0) {
   /* Trust Signals — Verification Badge & Freshness Chip */
   const verificationHTML = window.ScholrTrust ? window.ScholrTrust.getVerificationBadge(school.verification_level, { compact: true }) : '';
   const freshnessHTML    = window.ScholrTrust ? window.ScholrTrust.renderFreshnessChip(school.updated_at, school.last_verified_at) : '';
+  const transparencyNoticeHTML = window.ScholrTrust ? window.ScholrTrust.renderTransparencyMessage(school.verification_level, school.data_notes, { compact: true }) : '';
   
-  const trustRowHTML = (verificationHTML || freshnessHTML) 
-    ? `<div class="card__trust-row">${verificationHTML}${freshnessHTML}</div>` 
+  const trustRowHTML = (verificationHTML || freshnessHTML || transparencyNoticeHTML) 
+    ? `<div class="card__trust-row">${verificationHTML}${freshnessHTML}${transparencyNoticeHTML}</div>` 
     : '';
 
   return `
