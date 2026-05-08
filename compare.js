@@ -147,6 +147,12 @@ function renderCompare(schools) {
     const smartSummary = school.smart_summary
       ? `<p class="compare__summary">${safe(school.smart_summary)}</p>`
       : '';
+      
+    const verificationHTML = window.ScholrTrust ? window.ScholrTrust.getVerificationBadge(school.verification_level) : '';
+    const freshnessHTML    = window.ScholrTrust ? window.ScholrTrust.renderFreshnessChip(school.updated_at, school.last_verified_at) : '';
+    const trustRowHTML     = (verificationHTML || freshnessHTML)
+      ? `<div class="compare__trust-row">${verificationHTML}${freshnessHTML}</div>`
+      : '';
 
     return `
       <div class="compare-col fade-in">
@@ -159,6 +165,9 @@ function renderCompare(schools) {
           </svg>
           ${safe(school.location)}, ${safe(school.city)}
         </p>
+        
+        ${trustRowHTML}
+        
         <div class="compare__badges">
           <span class="card__board board--${boardKey}">${safe(school.board)}</span>
           ${feeCatHTML}

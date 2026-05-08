@@ -250,28 +250,10 @@ function renderSchool(school) {
     </span>`;
   }
 
-  /* --- Verification block --- */
-  const isVerified   = school.verified === true || (school.data_source && school.data_source.toLowerCase() === 'verified');
-  const updatedAt    = school.updated_at || school.last_updated;
-  const updatedLabel = updatedAt
-    ? new Date(updatedAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long' })
-    : null;
-
-  const verificationHTML = isVerified
-    ? `<div class="verify-block verify-block--verified">
-        <svg class="verify-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        <div>
-          <span class="verify-title">Verified by Scholr</span>
-          ${updatedLabel ? `<span class="verify-sub">Updated ${updatedLabel}</span>` : ''}
-        </div>
-       </div>`
-    : `<div class="verify-block verify-block--estimated">
-        <svg class="verify-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <div>
-          <span class="verify-title">Estimated Data</span>
-          ${updatedLabel ? `<span class="verify-sub">Last updated ${updatedLabel}</span>` : ''}
-        </div>
-       </div>`;
+  /* --- Trust & Verification Block --- */
+  const trustSectionHTML = window.ScholrTrust 
+    ? window.ScholrTrust.renderTrustSection(school)
+    : '';
 
   /* ── Final HTML ──────────────────────────────────────── */
   container.innerHTML = `
@@ -366,10 +348,29 @@ function renderSchool(school) {
 
       <!-- ── VERIFICATION ───────────────────────── -->
       <div class="detail__section detail__trust">
-        <h2 class="section-heading">Trust &amp; Verification</h2>
-        ${verificationHTML}
+        <div class="detail__trust-header">
+          <h2 class="section-heading" style="margin-bottom:0;">Trust &amp; Verification</h2>
+          <button class="suggest-btn" id="suggest-btn-trigger">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            Suggest an Update
+          </button>
+        </div>
+        ${trustSectionHTML}
       </div>
 
     </div>
   `;
 }
+
+// Hook up Suggest an Update button right after render
+const oldRenderSchool = renderSchool;
+renderSchool = function(school) {
+  oldRenderSchool(school);
+  
+  const btn = document.getElementById('suggest-btn-trigger');
+  if (btn && window.ScholrTrust) {
+    btn.addEventListener('click', () => {
+      window.ScholrTrust.openSuggestModal(school);
+    });
+  }
+};

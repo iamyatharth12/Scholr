@@ -200,6 +200,14 @@ function buildCardHTML(school, index = 0) {
     ? `<p class="card__summary">${safe(school.smart_summary.slice(0, 105))}${school.smart_summary.length > 105 ? '…' : ''}</p>`
     : '';
 
+  /* Trust Signals — Verification Badge & Freshness Chip */
+  const verificationHTML = window.ScholrTrust ? window.ScholrTrust.getVerificationBadge(school.verification_level, { compact: true }) : '';
+  const freshnessHTML    = window.ScholrTrust ? window.ScholrTrust.renderFreshnessChip(school.updated_at, school.last_verified_at) : '';
+  
+  const trustRowHTML = (verificationHTML || freshnessHTML) 
+    ? `<div class="card__trust-row">${verificationHTML}${freshnessHTML}</div>` 
+    : '';
+
   return `
     <article class="school-card card-enter" style="animation-delay: ${index * 0.05}s;" tabindex="0" aria-label="${safe(school.name)}">
       <div class="card__top">
@@ -219,6 +227,7 @@ function buildCardHTML(school, index = 0) {
       ${tagsHTML ? `<div class="card__tags">${tagsHTML}</div>` : ''}
 
       <h3 class="card__name">${safe(school.name)}</h3>
+      ${trustRowHTML}
 
       <p class="card__location">
         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13"
