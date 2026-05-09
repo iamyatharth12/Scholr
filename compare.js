@@ -43,6 +43,7 @@ async function loadComparison(ids) {
     }
     showComparison();
     renderCompare(data);
+    if (window.ScholrAnalytics) window.ScholrAnalytics.trackCompareUsage(ids);
   } catch (err) {
     showError(err.message);
   }

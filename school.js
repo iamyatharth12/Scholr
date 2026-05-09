@@ -69,6 +69,7 @@ async function loadSchool(id) {
 
     showSchool();
     renderSchool(data);
+    if (window.ScholrAnalytics) window.ScholrAnalytics.trackSchoolView(id, data.name);
   } catch (err) {
     console.error(err);
     showError(err.message);
@@ -370,7 +371,20 @@ renderSchool = function(school) {
   const btn = document.getElementById('suggest-btn-trigger');
   if (btn && window.ScholrTrust) {
     btn.addEventListener('click', () => {
+      if (window.ScholrAnalytics) window.ScholrAnalytics.trackSuggestUpdateClick(school.id);
       window.ScholrTrust.openSuggestModal(school);
     });
   }
+  
+  // Hook up contact analytics
+  const trackContact = (id, type) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', () => {
+      if (window.ScholrAnalytics) window.ScholrAnalytics.trackContactClick(type, school.id);
+    });
+  };
+  trackContact('btn-website', 'website');
+  trackContact('btn-call', 'phone');
+  trackContact('btn-maps', 'maps');
+  trackContact('btn-email', 'email');
 };

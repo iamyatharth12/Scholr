@@ -101,6 +101,7 @@
     if (query === '') {
       await window.Scholr.fetchSchools();
     } else {
+      if (window.ScholrAnalytics) window.ScholrAnalytics.trackSearch(query);
       await window.Scholr.searchSchools(query);
     }
     document.getElementById('listings').scrollIntoView({ behavior: 'smooth' });
@@ -134,6 +135,8 @@
     const board = boardSel.value;
     const fee   = feeSel.value;
     
+    if (window.ScholrAnalytics) window.ScholrAnalytics.trackFilterUsage(board, fee);
+
     boardSel.disabled = true;
     feeSel.disabled = true;
     applyBtn.disabled = true;
@@ -197,5 +200,79 @@
       }
     });
   });
+
+  /* ══════════════════════════════════
+     Suggest a School Modal
+  ══════════════════════════════════ */
+  const suggestModal = document.getElementById('suggest-school-modal');
+  const suggestForm = document.getElementById('suggest-school-form');
+  const suggestSuccess = document.getElementById('suggest-school-success');
+
+  function openSuggestModal() {
+    if (!suggestModal) return;
+    suggestModal.hidden = false;
+    if (suggestForm) suggestForm.style.display = 'block';
+    if (suggestSuccess) suggestSuccess.hidden = true;
+  }
+
+  function closeSuggestModal() {
+    if (!suggestModal) return;
+    suggestModal.hidden = true;
+    if (suggestForm) suggestForm.reset();
+  }
+
+  // Bind footer link
+  const footerSuggestLink = document.getElementById('footer-suggest-link');
+  if (footerSuggestLink) {
+    footerSuggestLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      openSuggestModal();
+    });
+  }
+
+  // Bind dynamic triggers (e.g. from empty states)
+  document.body.addEventListener('click', (e) => {
+    if (e.target.closest('.suggest-school-trigger')) {
+      e.preventDefault();
+      openSuggestModal();
+    }
+  });
+
+  // Bind close buttons
+  const suggestCloseBtn = document.getElementById('suggest-school-close');
+  if (suggestCloseBtn) suggestCloseBtn.addEventListener('click', closeSuggestModal);
+  
+  const suggestDoneBtn = document.getElementById('suggest-school-done');
+  if (suggestDoneBtn) suggestDoneBtn.addEventListener('click', closeSuggestModal);
+
+  // Close on outside click
+  if (suggestModal) {
+    suggestModal.addEventListener('click', (e) => {
+      if (e.target === suggestModal) closeSuggestModal();
+    });
+  }
+
+  // Form submit
+  if (suggestForm) {
+    suggestForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('suggest-school-submit');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Submitting...';
+      submitBtn.disabled = true;
+
+      // Simulate API call
+      setTimeout(() => {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        
+        suggestForm.style.display = 'none';
+        if (suggestSuccess) suggestSuccess.hidden = false;
+        
+        if (window.ScholrAnalytics) window.ScholrAnalytics.trackSuggestSchool();
+      }, 600);
+    });
+  }
 
 })();

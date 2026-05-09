@@ -2041,3 +2041,100 @@ body {
   .suggest-form__actions .btn { width: 100%; justify-content: center; }
   .trust-meta-row { gap: 12px; }
 }
+
+/* ═══════════════════════════════════════════
+   GENERIC MODAL (Suggest a School)
+═══════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 1;
+  transition: opacity var(--transition);
+}
+
+.modal-overlay[hidden] {
+  display: none !important;
+}
+
+.modal {
+  background: var(--clr-surface);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 440px;
+  padding: 32px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  transform: translateY(0) scale(1);
+  transition: transform var(--transition);
+}
+
+.modal__close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--clr-text-muted);
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  transition: color var(--transition), background var(--transition);
+}
+
+.modal__close:hover {
+  color: var(--clr-text-primary);
+  background: var(--clr-bg);
+}
+
+.modal__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--clr-text-primary);
+  margin-bottom: 8px;
+}
+
+.modal__sub {
+  font-size: 0.95rem;
+  color: var(--clr-text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.modal__form .form-group {
+  margin-bottom: 16px;
+}
+
+.modal__form .form-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--clr-text-primary);
+  margin-bottom: 6px;
+}
+
+.modal__form .form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--clr-text-primary);
+  background: var(--clr-bg);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.modal__form .form-input:focus {
+  outline: none;
+  border-color: var(--clr-blue-500);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}

@@ -271,13 +271,54 @@
       <p class="footer__copy">© 2026 Scholr. All rights reserved.</p>
       <nav class="footer__links">
         <a href="#" class="footer-link">Privacy Policy</a>
+        <button class="footer-link" id="footer-suggest-link" style="background:none;border:none;padding:0;font:inherit;cursor:pointer;">Suggest a School</button>
         <a href="#" class="footer-link">Contact Us</a>
       </nav>
     </div>
   </footer>
 
+  <!-- ═══════════════════════════════════════════
+       SUGGEST A SCHOOL MODAL
+  ═══════════════════════════════════════════ -->
+  <div class="modal-overlay" id="suggest-school-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="suggest-school-title">
+      <button class="modal__close" id="suggest-school-close" aria-label="Close modal">&times;</button>
+      <h2 class="modal__title" id="suggest-school-title">Suggest a School</h2>
+      <p class="modal__sub">Help us grow by adding a missing school to our database.</p>
+      
+      <form id="suggest-school-form" class="modal__form">
+        <div class="form-group">
+          <label for="suggest-school-name" class="form-label">School Name *</label>
+          <input type="text" id="suggest-school-name" class="form-input" required placeholder="e.g. Delhi Public School">
+        </div>
+        <div class="form-group">
+          <label for="suggest-school-city" class="form-label">City/Location *</label>
+          <input type="text" id="suggest-school-city" class="form-input" required placeholder="e.g. Guwahati">
+        </div>
+        <div class="form-group">
+          <label for="suggest-school-website" class="form-label">Website (Optional)</label>
+          <input type="url" id="suggest-school-website" class="form-input" placeholder="https://...">
+        </div>
+        <div class="form-actions" style="margin-top: 1rem;">
+          <button type="submit" class="btn btn--primary" style="width: 100%;" id="suggest-school-submit">Submit Suggestion</button>
+        </div>
+      </form>
+      
+      <div id="suggest-school-success" hidden style="text-align: center; padding: 20px 0;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--clr-green-500)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 12px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <h3 style="margin-bottom: 8px;">Thank You!</h3>
+        <p style="color: var(--clr-text-sec); margin-bottom: 16px;">Your suggestion has been submitted. We'll review and add it soon.</p>
+        <button type="button" class="btn btn--outline" id="suggest-school-done" style="width: 100%;">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Supabase JS client (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Plausible Analytics -->
+  <script defer data-domain="scholr-eight.vercel.app" src="https://plausible.io/js/script.js"></script>
+  <!-- Scholr Analytics -->
+  <script src="js/analytics.js"></script>
   <!-- Scholr Trust module -->
   <script src="js/trust.js"></script>
   <!-- Scholr DB integration -->
