@@ -52,5 +52,15 @@ window.ScholrAnalytics = {
 
   trackSuggestSchoolOpened: function() {
     this.trackEvent('suggest_school_opened');
-  }
+  },
+
+  // ── Level 2: Claim School ────────────────────────────────
+  trackClaimButtonClick: function(schoolId, schoolName) {
+    this.trackEvent('claim_button_clicked', { school_id: schoolId, school_name: schoolName });
+  },
+
+  trackClaimSubmitted: function(schoolId) {
+    this.trackEvent('claim_submitted', { school_id: schoolId });
+  },
 };
+
