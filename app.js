@@ -213,6 +213,7 @@
     suggestModal.hidden = false;
     if (suggestForm) suggestForm.style.display = 'block';
     if (suggestSuccess) suggestSuccess.hidden = true;
+    if (window.ScholrAnalytics) window.ScholrAnalytics.trackSuggestSchoolOpened();
   }
 
   function closeSuggestModal() {
@@ -254,24 +255,57 @@
 
   // Form submit
   if (suggestForm) {
-    suggestForm.addEventListener('submit', (e) => {
+    suggestForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
+      const nameVal    = document.getElementById('suggest-school-name').value.trim();
+      const cityVal    = document.getElementById('suggest-school-city').value.trim();
+      const websiteVal = document.getElementById('suggest-school-website').value.trim();
+
+      if (!nameVal || !cityVal) return; // HTML5 required handles UI
+
       const submitBtn = document.getElementById('suggest-school-submit');
       const originalText = submitBtn.textContent;
-      submitBtn.textContent = 'Submitting...';
+      submitBtn.textContent = 'Submitting…';
       submitBtn.disabled = true;
 
-      // Simulate API call
-      setTimeout(() => {
+      try {
+        if (window.ScholrDB) {
+          const { error } = await window.ScholrDB
+            .from('school_suggestions')
+            .insert({
+              school_name: nameVal,
+              city:        cityVal,
+              website:     websiteVal || null,
+              submitted_at: new Date().toISOString(),
+            });
+          if (error) throw error;
+        } else {
+          // No DB available — gracefully degrade with a short delay
+          await new Promise(r => setTimeout(r, 600));
+        }
+
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
-        
+
         suggestForm.style.display = 'none';
         if (suggestSuccess) suggestSuccess.hidden = false;
-        
+
         if (window.ScholrAnalytics) window.ScholrAnalytics.trackSuggestSchool();
-      }, 600);
+      } catch (err) {
+        console.warn('[Scholr] Suggest school error:', err);
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        // Show a basic error message inside the form
+        let errEl = document.getElementById('suggest-school-error');
+        if (!errEl) {
+          errEl = document.createElement('p');
+          errEl.id = 'suggest-school-error';
+          errEl.style.cssText = 'color:#b91c1c;font-size:0.85rem;margin-top:8px;';
+          suggestForm.querySelector('.form-actions').after(errEl);
+        }
+        errEl.textContent = 'Something went wrong. Please try again.';
+      }
     });
   }
 

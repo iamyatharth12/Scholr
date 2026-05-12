@@ -20,6 +20,25 @@ document.addEventListener('DOMContentLoaded', () => {
   if (ids.length < 2) { showError('Please select at least 2 schools to compare.'); return; }
 
   loadComparison(ids);
+
+  // Navbar scroll shadow
+  const navbar = document.getElementById('navbar');
+  if (navbar) {
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 8);
+    }, { passive: true });
+  }
+
+  // Hamburger menu
+  const hamburger = document.getElementById('hamburger');
+  const navLinks  = document.getElementById('nav-links');
+  if (hamburger && navLinks) {
+    hamburger.addEventListener('click', () => {
+      const open = hamburger.classList.toggle('open');
+      navLinks.classList.toggle('open', open);
+      hamburger.setAttribute('aria-expanded', String(open));
+    });
+  }
 });
 
 function showError(msg) {

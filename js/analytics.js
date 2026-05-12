@@ -26,6 +26,10 @@ window.ScholrAnalytics = {
     this.trackEvent('compare_started', { school_ids: schoolIds.join(',') });
   },
 
+  trackSavedSchool: function(schoolId) {
+    this.trackEvent('school_saved', { school_id: schoolId });
+  },
+
   trackFilterUsage: function(board, fee) {
     this.trackEvent('filter_applied', { board: board || 'any', fee: fee || 'any' });
   },
@@ -44,5 +48,9 @@ window.ScholrAnalytics = {
 
   trackSuggestSchool: function() {
     this.trackEvent('suggest_school_submitted');
+  },
+
+  trackSuggestSchoolOpened: function() {
+    this.trackEvent('suggest_school_opened');
   }
 };

@@ -17,6 +17,9 @@ if (!window.supabase) {
 const { createClient } = window.supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
+/* ── Expose db globally for trust.js suggestion submits ── */
+window.ScholrDB = db;
+
 /* ── DOM refs ────────────────────────────────────────── */
 const cardsGrid  = document.getElementById('cards-grid');
 const emptyState = document.getElementById('empty-state');
@@ -33,7 +36,7 @@ function toggleSave(id) {
     savedSchools = savedSchools.filter(s => s !== strId);
   } else {
     savedSchools.push(strId);
-    if (window.ScholrAnalytics) window.ScholrAnalytics.trackEvent('school_saved', { school_id: strId });
+    if (window.ScholrAnalytics) window.ScholrAnalytics.trackSavedSchool(strId);
   }
   localStorage.setItem('savedSchools', JSON.stringify(savedSchools));
   return isSaved(strId);
@@ -279,14 +282,22 @@ function renderSchools(data) {
     cardsGrid.style.display = 'none';
     emptyState.hidden = false;
     countBadge.textContent = '0 schools found';
-    
-    // Contextual empty state
+
+    // Contextual empty state — don't clobber "Saved Schools" or loading text
     const titleEl = emptyState.querySelector('.empty-state__title');
-    const subEl = emptyState.querySelector('.empty-state__sub');
-    
-    if (titleEl && !titleEl.textContent.toLowerCase().includes('saved') && !titleEl.textContent.toLowerCase().includes('load')) {
-      titleEl.textContent = 'No schools matched your criteria';
-      subEl.innerHTML = 'Try adjusting your fee or board filters, or <button class="btn btn--ghost suggest-school-trigger" style="display:inline-block; margin-top:8px; padding:6px 12px; font-size:0.85rem;">Suggest a missing school</button>';
+    const subEl   = emptyState.querySelector('.empty-state__sub');
+    const iconEl  = emptyState.querySelector('.empty-state__icon');
+
+    const isSavedPage = titleEl && titleEl.textContent.toLowerCase().includes('saved');
+
+    if (!isSavedPage && titleEl) {
+      iconEl.textContent   = '🔍';
+      titleEl.textContent  = 'No schools matched your criteria';
+      subEl.innerHTML =
+        'Try adjusting your board or fee filter — or help us grow!' +
+        '<br><button class="btn btn--ghost suggest-school-trigger" ' +
+        'style="margin-top:14px;font-size:0.85rem;padding:8px 16px;" ' +
+        'id="empty-state-suggest-btn">+ Suggest a missing school</button>';
     }
     return;
   }

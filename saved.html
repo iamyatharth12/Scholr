@@ -44,25 +44,64 @@
 
         <!-- Empty State (hidden by default) -->
         <div class="empty-state" id="empty-state" hidden aria-live="polite">
-          <div class="empty-state__icon">⭐</div>
-          <h3 class="empty-state__title">No saved schools</h3>
-          <p class="empty-state__sub">You haven't saved any schools yet. Go back to explore and save your favorites.</p>
-          <a href="index.html" class="btn btn--primary" id="reset-btn">Explore Schools</a>
+          <div class="empty-state__icon">★</div>
+          <h3 class="empty-state__title">No saved schools yet</h3>
+          <p class="empty-state__sub">Start exploring and hit <strong>Save</strong> on schools you like &mdash; they'll appear here for easy comparison.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px;">
+            <a href="index.html#listings" class="btn btn--primary">Explore Schools</a>
+            <button class="btn btn--ghost suggest-school-trigger" id="saved-suggest-btn">+ Suggest a School</button>
+          </div>
         </div>
 
       </div>
     </section>
   </main>
 
-  <!-- ═══════════════════════════════════════════
+  <!-- ═════════════════════════════════════════════
        FOOTER
-  ═══════════════════════════════════════════ -->
+  ═════════════════════════════════════════════ -->
   <footer class="footer" id="footer">
     <div class="container footer__inner">
       <span class="footer__brand">Scholr</span>
       <p class="footer__copy">© 2026 Scholr. All rights reserved.</p>
+      <nav class="footer__links">
+        <a href="index.html" class="footer-link">Explore</a>
+        <button class="footer-link" id="footer-suggest-link" style="background:none;border:none;padding:0;font:inherit;cursor:pointer;">Suggest a School</button>
+      </nav>
     </div>
   </footer>
+
+  <!-- Suggest a School Modal -->
+  <div class="modal-overlay" id="suggest-school-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="suggest-school-title">
+      <button class="modal__close" id="suggest-school-close" aria-label="Close modal">&times;</button>
+      <h2 class="modal__title" id="suggest-school-title">Suggest a School</h2>
+      <p class="modal__sub">Help us grow by adding a missing school to our database.</p>
+      <form id="suggest-school-form" class="modal__form">
+        <div class="form-group">
+          <label for="suggest-school-name" class="form-label">School Name *</label>
+          <input type="text" id="suggest-school-name" class="form-input" required placeholder="e.g. Delhi Public School">
+        </div>
+        <div class="form-group">
+          <label for="suggest-school-city" class="form-label">City/Location *</label>
+          <input type="text" id="suggest-school-city" class="form-input" required placeholder="e.g. Guwahati">
+        </div>
+        <div class="form-group">
+          <label for="suggest-school-website" class="form-label">Website (Optional)</label>
+          <input type="url" id="suggest-school-website" class="form-input" placeholder="https://...">
+        </div>
+        <div class="form-actions" style="margin-top: 1rem;">
+          <button type="submit" class="btn btn--primary" style="width: 100%;" id="suggest-school-submit">Submit Suggestion</button>
+        </div>
+      </form>
+      <div id="suggest-school-success" hidden style="text-align: center; padding: 20px 0;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 12px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <h3 style="margin-bottom: 8px;">Thank You!</h3>
+        <p style="color: #6b7280; margin-bottom: 16px;">Your suggestion has been submitted. We'll review and add it soon.</p>
+        <button type="button" class="btn btn--outline" id="suggest-school-done" style="width: 100%;">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Supabase JS client (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -72,13 +111,81 @@
   <script src="js/analytics.js"></script>
   <!-- Scholr Trust module -->
   <script src="js/trust.js"></script>
-  <!-- Scholr DB integration -->
+  <!-- Scholr DB integration (also sets window.ScholrDB) -->
   <script src="supabase.js"></script>
-  <!-- Init -->
+  <!-- Saved page init + Suggest modal wiring -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       window.Scholr.loadSavedSchools();
+
+      // Navbar scroll + hamburger
+      const navbar    = document.getElementById('navbar');
+      const hamburger = document.getElementById('hamburger');
+      const navLinks  = document.getElementById('nav-links');
+      window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 8);
+      }, { passive: true });
+      hamburger.addEventListener('click', () => {
+        const open = hamburger.classList.toggle('open');
+        navLinks.classList.toggle('open', open);
+        hamburger.setAttribute('aria-expanded', String(open));
+      });
+
+      // Suggest a School modal
+      const modal   = document.getElementById('suggest-school-modal');
+      const form    = document.getElementById('suggest-school-form');
+      const success = document.getElementById('suggest-school-success');
+
+      function openModal() {
+        modal.hidden = false;
+        form.style.display = 'block';
+        success.hidden = true;
+        if (window.ScholrAnalytics) window.ScholrAnalytics.trackSuggestSchoolOpened();
+      }
+      function closeModal() { modal.hidden = true; form.reset(); }
+
+      document.getElementById('suggest-school-close').addEventListener('click', closeModal);
+      document.getElementById('suggest-school-done').addEventListener('click', closeModal);
+      modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+      document.getElementById('footer-suggest-link').addEventListener('click', openModal);
+
+      // Delegate triggers from empty state, etc.
+      document.body.addEventListener('click', e => {
+        if (e.target.closest('.suggest-school-trigger')) { e.preventDefault(); openModal(); }
+      });
+
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const nameVal    = document.getElementById('suggest-school-name').value.trim();
+        const cityVal    = document.getElementById('suggest-school-city').value.trim();
+        const websiteVal = document.getElementById('suggest-school-website').value.trim();
+        if (!nameVal || !cityVal) return;
+
+        const btn = document.getElementById('suggest-school-submit');
+        btn.textContent = 'Submitting\u2026';
+        btn.disabled = true;
+        try {
+          if (window.ScholrDB) {
+            const { error } = await window.ScholrDB
+              .from('school_suggestions')
+              .insert({ school_name: nameVal, city: cityVal, website: websiteVal || null });
+            if (error) throw error;
+          } else {
+            await new Promise(r => setTimeout(r, 600));
+          }
+          btn.textContent = 'Submit Suggestion';
+          btn.disabled = false;
+          form.style.display = 'none';
+          success.hidden = false;
+          if (window.ScholrAnalytics) window.ScholrAnalytics.trackSuggestSchool();
+        } catch (err) {
+          console.warn('[Scholr] Suggest school error:', err);
+          btn.textContent = 'Submit Suggestion';
+          btn.disabled = false;
+        }
+      });
     });
   </script>
 </body>
 </html>
+

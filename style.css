@@ -15,8 +15,14 @@
   --clr-blue-600:  #2563eb;
   --clr-blue-700:  #1d4ed8;
 
+  --clr-green-50:  #f0fdf4;
+  --clr-green-100: #dcfce7;
+  --clr-green-500: #22c55e;
+  --clr-green-600: #16a34a;
+
   --clr-text-primary:   #111827;
   --clr-text-secondary: #6b7280;
+  --clr-text-sec:       #6b7280; /* alias used in inline styles */
   --clr-text-muted:     #9ca3af;
 
   --radius-sm:  6px;
@@ -27,6 +33,7 @@
   --shadow-xs:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
   --shadow-sm:  0 4px 12px rgba(0,0,0,.07);
   --shadow-md:  0 8px 24px rgba(0,0,0,.10);
+  --shadow-lg:  0 20px 60px rgba(0,0,0,.15), 0 8px 20px rgba(0,0,0,.08);
   --shadow-card-hover: 0 16px 40px rgba(37,99,235,.12);
 
   --font: 'Inter', system-ui, -apple-system, sans-serif;
@@ -727,6 +734,10 @@ body {
   .compare-bar { width: 92%; max-width: 400px; padding: 12px 20px; }
 
   .footer__inner { flex-direction: column; text-align: center; gap: 16px; }
+
+  /* Empty state action buttons on mobile */
+  .empty-state > div[style*="flex"] { flex-direction: column; align-items: stretch; }
+  .empty-state .btn { width: 100%; justify-content: center; }
 }
 
 @media (max-width: 480px) {
