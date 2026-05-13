@@ -64,6 +64,46 @@
     </div>
   </footer>
 
+  <!-- Claim School Modal -->
+  <div class="modal-overlay" id="claim-school-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="claim-school-title">
+      <button class="modal__close" id="claim-school-close" aria-label="Close modal">&times;</button>
+      <h2 class="modal__title" id="claim-school-title">Claim This School</h2>
+      <p class="modal__sub">Claim your school profile to manage your listing on Scholr.</p>
+      
+      <form id="claim-school-form" class="modal__form">
+        <div class="form-group">
+          <label for="claim-school-name" class="form-label">School Name *</label>
+          <input type="text" id="claim-school-name" class="form-input" required readonly>
+        </div>
+        <div class="form-group">
+          <label for="claim-official-email" class="form-label">Official School Email *</label>
+          <input type="email" id="claim-official-email" class="form-input" required placeholder="admin@yourschool.edu">
+          <small style="color: var(--clr-text-muted); font-size: 0.75rem;">Must be a school domain. Personal emails (Gmail, Yahoo) may be rejected.</small>
+        </div>
+        <div class="form-group">
+          <label for="claim-contact-number" class="form-label">Contact Number *</label>
+          <input type="tel" id="claim-contact-number" class="form-input" required placeholder="Your direct line">
+        </div>
+        <div class="form-group">
+          <label for="claim-designation" class="form-label">Your Designation *</label>
+          <input type="text" id="claim-designation" class="form-input" required placeholder="e.g. Principal, Director, Admin">
+        </div>
+        
+        <div class="form-actions" style="margin-top: 1.25rem;">
+          <button type="submit" class="btn btn--primary" style="width: 100%;" id="claim-school-submit">Submit Request</button>
+        </div>
+      </form>
+      
+      <div id="claim-school-success" hidden style="text-align: center; padding: 20px 0;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--clr-green-500, #22c55e)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 12px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <h3 style="margin-bottom: 8px;">Request Submitted</h3>
+        <p style="color: var(--clr-text-sec, #6b7280); margin-bottom: 16px; font-size: 0.95rem;">Our team will review your request and verify your details shortly. We will contact you at the provided email.</p>
+        <button type="button" class="btn btn--outline" id="claim-school-done" style="width: 100%;">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Supabase JS client (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Plausible Analytics -->

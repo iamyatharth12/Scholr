@@ -1781,6 +1781,17 @@ body {
 .trust-verify--community .trust-verify__icon-wrap { background: #dbeafe; color: #1d4ed8; }
 .trust-verify--limited .trust-verify__icon-wrap   { background: #f3f4f6; color: #6b7280; }
 
+.trust-verify--claimed {
+  background: var(--clr-surface);
+  border-color: var(--clr-green-500);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.06);
+  margin-bottom: 16px;
+}
+.trust-verify--claimed .trust-verify__icon-wrap { 
+  background: var(--clr-green-50); 
+  color: var(--clr-green-600); 
+}
+
 .trust-verify__title {
   display: block;
   font-size: 0.92rem;
@@ -1839,6 +1850,18 @@ body {
   color: var(--clr-blue-600);
   border-color: var(--clr-blue-500);
   background: var(--clr-blue-50);
+}
+
+.claim-btn {
+  border: 1.5px solid var(--clr-border);
+  background: var(--clr-surface);
+}
+
+.claim-btn:hover {
+  color: var(--clr-text-primary);
+  border-color: var(--clr-text-secondary);
+  background: var(--clr-bg);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ── Suggest Modal ──────────────────────────────────────── */

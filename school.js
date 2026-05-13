@@ -349,13 +349,32 @@ function renderSchool(school) {
 
       <!-- ── VERIFICATION ───────────────────────── -->
       <div class="detail__section detail__trust">
-        <div class="detail__trust-header">
+        <div class="detail__trust-header" style="align-items: center;">
           <h2 class="section-heading" style="margin-bottom:0;">Trust &amp; Verification</h2>
-          <button class="suggest-btn" id="suggest-btn-trigger">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            Suggest an Update
-          </button>
+          <div style="display:flex; gap: 8px; flex-wrap: wrap;">
+            ${!school.is_claimed ? `
+            <button class="suggest-btn claim-btn" id="claim-btn-trigger">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Claim This School
+            </button>
+            ` : ''}
+            <button class="suggest-btn" id="suggest-btn-trigger">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Suggest an Update
+            </button>
+          </div>
         </div>
+        ${school.is_claimed ? `
+        <div class="trust-verify trust-verify--claimed">
+          <div class="trust-verify__icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <span class="trust-verify__title">Profile Claimed by School</span>
+            <span class="trust-verify__sub">This profile is actively managed by the school administration</span>
+          </div>
+        </div>
+        ` : ''}
         ${trustSectionHTML}
       </div>
 
@@ -368,11 +387,20 @@ const oldRenderSchool = renderSchool;
 renderSchool = function(school) {
   oldRenderSchool(school);
   
-  const btn = document.getElementById('suggest-btn-trigger');
-  if (btn && window.ScholrTrust) {
-    btn.addEventListener('click', () => {
+  const suggestBtn = document.getElementById('suggest-btn-trigger');
+  if (suggestBtn && window.ScholrTrust) {
+    suggestBtn.addEventListener('click', () => {
       if (window.ScholrAnalytics) window.ScholrAnalytics.trackSuggestUpdateClick(school.id);
       window.ScholrTrust.openSuggestModal(school);
+    });
+  }
+  
+  // Claim School Logic
+  const claimBtn = document.getElementById('claim-btn-trigger');
+  if (claimBtn) {
+    claimBtn.addEventListener('click', () => {
+      if (window.ScholrAnalytics) window.ScholrAnalytics.trackClaimButtonClick(school.id, school.name);
+      openClaimModal(school);
     });
   }
   
@@ -388,3 +416,90 @@ renderSchool = function(school) {
   trackContact('btn-maps', 'maps');
   trackContact('btn-email', 'email');
 };
+
+/* ── CLAIM SCHOOL MODAL LOGIC ──────────────────────────── */
+function openClaimModal(school) {
+  const modal = document.getElementById('claim-school-modal');
+  const form = document.getElementById('claim-school-form');
+  const success = document.getElementById('claim-school-success');
+  const nameInput = document.getElementById('claim-school-name');
+  
+  if (!modal) return;
+  
+  modal.hidden = false;
+  form.style.display = 'block';
+  success.hidden = true;
+  
+  // Reset and populate form
+  form.reset();
+  nameInput.value = school.name;
+  
+  // Close handlers
+  const closeModal = () => modal.hidden = true;
+  document.getElementById('claim-school-close').onclick = closeModal;
+  document.getElementById('claim-school-done').onclick = closeModal;
+  modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+  
+  // Form submission
+  // Remove existing listener to prevent duplicates if opened multiple times
+  const newForm = form.cloneNode(true);
+  form.parentNode.replaceChild(newForm, form);
+  
+  newForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const emailVal = document.getElementById('claim-official-email').value.trim();
+    const phoneVal = document.getElementById('claim-contact-number').value.trim();
+    const desigVal = document.getElementById('claim-designation').value.trim();
+    
+    // Basic spam prevention: check local storage for recent submission
+    const lastSub = localStorage.getItem('last_claim_sub');
+    if (lastSub && Date.now() - parseInt(lastSub, 10) < 60000) {
+      alert("Please wait a moment before submitting another request.");
+      return;
+    }
+    
+    const submitBtn = document.getElementById('claim-school-submit');
+    submitBtn.textContent = 'Submitting…';
+    submitBtn.disabled = true;
+    
+    try {
+      const { error } = await db
+        .from('school_claim_requests')
+        .insert({
+          school_id: school.id,
+          school_name: school.name,
+          official_email: emailVal,
+          contact_phone: phoneVal,
+          designation: desigVal
+        });
+        
+      if (error) throw error;
+      
+      localStorage.setItem('last_claim_sub', Date.now());
+      
+      submitBtn.textContent = 'Submit Request';
+      submitBtn.disabled = false;
+      
+      newForm.style.display = 'none';
+      document.getElementById('claim-school-success').hidden = false;
+      
+      if (window.ScholrAnalytics) window.ScholrAnalytics.trackClaimSubmitted(school.id);
+      
+    } catch (err) {
+      console.warn('[Scholr] Claim submission error:', err);
+      submitBtn.textContent = 'Submit Request';
+      submitBtn.disabled = false;
+      
+      let errEl = document.getElementById('claim-error-msg');
+      if (!errEl) {
+        errEl = document.createElement('p');
+        errEl.id = 'claim-error-msg';
+        errEl.style.cssText = 'color:#b91c1c;font-size:0.85rem;margin-top:8px;';
+        newForm.querySelector('.form-actions').after(errEl);
+      }
+      errEl.textContent = 'Something went wrong. Please try again.';
+    }
+  });
+}
+
