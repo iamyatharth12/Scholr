@@ -62,5 +62,35 @@ window.ScholrAnalytics = {
   trackClaimSubmitted: function(schoolId) {
     this.trackEvent('claim_submitted', { school_id: schoolId });
   },
+
+  // ── Level 3: Admissions ────────────────────────────────
+  trackAdmissionTimelineViewed: function(schoolId) {
+    this.trackEvent('admission_timeline_viewed', { school_id: schoolId });
+  },
+
+  trackAdmissionStatusClicked: function(schoolId, status) {
+    this.trackEvent('admission_status_clicked', { school_id: schoolId, status: status });
+  },
+
+  // ── Level 4: Discovery & Recommendations ────────────────
+  trackRecommendationClicked: function(source, schoolId) {
+    this.trackEvent('recommendation_clicked', { source: source, school_id: schoolId });
+  },
+
+  trackAdvancedFilterUsed: function(filterType, value) {
+    this.trackEvent('advanced_filter_used', { filter_type: filterType, value: value });
+  },
+
+  trackSimilarSchoolOpened: function(sourceSchoolId, targetSchoolId) {
+    this.trackEvent('similar_school_opened', { source_id: sourceSchoolId, target_id: targetSchoolId });
+  },
+
+  trackSmartSearchUsed: function(query, resultCount) {
+    this.trackEvent('smart_search_used', { query: query, result_count: resultCount });
+  },
+
+  trackRecommendationGroupViewed: function(groupName) {
+    this.trackEvent('recommendation_group_viewed', { group_name: groupName });
+  }
 };
 

@@ -106,6 +106,37 @@
             </div>
           </div>
 
+          <div class="filter-group">
+            <label class="filter-group__label" for="rating-filter">Rating</label>
+            <div class="select-wrap">
+              <select id="rating-filter" class="filter-select">
+                <option value="">Any Rating</option>
+                <option value="4">4+ Stars</option>
+                <option value="4.5">4.5+ Stars</option>
+              </select>
+              <svg class="select-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+
+          <div class="filter-group advanced-filters">
+             <label class="filter-group__label">Must Have</label>
+             <div style="display: flex; gap: 12px; align-items: center; margin-top: 10px; flex-wrap: wrap;">
+               <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                 <input type="checkbox" id="filter-hostel" value="hostel"> Hostel
+               </label>
+               <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                 <input type="checkbox" id="filter-transport" value="transport"> Transport
+               </label>
+               <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                 <input type="checkbox" id="filter-sports" value="sports"> Sports
+               </label>
+               <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 4px; margin-left: 8px; color: var(--clr-blue-700); font-weight: 500; cursor: pointer;">
+                 <input type="checkbox" id="filter-admissions"> Admissions Open
+               </label>
+             </div>
+          </div>
+
+
           <div class="filter-group filter-group--slider">
             <label class="filter-group__label" for="distance-slider">
               Distance
@@ -125,6 +156,15 @@
 
           <button class="btn btn--primary filters__apply" id="apply-filters-btn">Apply Filters</button>
         </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         RECOMMENDATIONS
+    ═══════════════════════════════════════════ -->
+    <section class="recommendations-section" id="recommendations" style="display: none; padding: 48px 0 0;">
+      <div class="container" id="recommendation-groups">
+        <!-- Rendered by JS -->
       </div>
     </section>
 
@@ -323,6 +363,8 @@
   <script src="js/trust.js"></script>
   <!-- Scholr DB integration -->
   <script src="supabase.js"></script>
+  <!-- Scholr Discovery layer -->
+  <script src="js/discovery.js"></script>
   <!-- Scholr UI logic -->
   <script src="app.js"></script>
 </body>

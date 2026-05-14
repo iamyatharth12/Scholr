@@ -55,21 +55,26 @@ function showSchool() {
 
 async function loadSchool(id) {
   try {
-    const { data, error } = await db
+    const { data: schoolData, error: schoolError } = await db
       .from('schools')
       .select('*')
       .eq('id', id)
       .single();
 
-    if (error || !data) {
-      console.error('[Scholr] Supabase fetch error:', error);
-      showError(error ? error.message : "School not found.");
+    if (schoolError || !schoolData) {
+      console.error('[Scholr] Supabase fetch error:', schoolError);
+      showError(schoolError ? schoolError.message : "School not found.");
       return;
     }
+    
+    // Fetch all schools for recommendations
+    const { data: allSchools } = await db
+      .from('schools')
+      .select('*');
 
     showSchool();
-    renderSchool(data);
-    if (window.ScholrAnalytics) window.ScholrAnalytics.trackSchoolView(id, data.name);
+    renderSchool(schoolData, allSchools || []);
+    if (window.ScholrAnalytics) window.ScholrAnalytics.trackSchoolView(id, schoolData.name);
   } catch (err) {
     console.error(err);
     showError(err.message);
@@ -161,8 +166,38 @@ function facilityIcon(name) {
   return FACILITY_ICONS['default'];
 }
 
+/* ─── Mini Card for Recommendations ─────────────── */
+function buildMiniCardHTML(school) {
+  const boardKey = boardClass(school.board);
+  const feeCategory = school.fee_category || inferFeeCategory(school.fees);
+  const feeCatHTML  = feeCategory
+    ? `<span class="fee-category-badge ${feeCategoryClass(feeCategory)}" style="font-size:0.7rem; padding: 2px 6px;">${safe(feeCategory)}</span>`
+    : '';
+
+  return `
+    <article class="school-card" tabindex="0" onclick="
+      if(window.ScholrAnalytics) window.ScholrAnalytics.trackSimilarSchoolOpened('${safe(window.currentSchoolId)}', '${school.id}');
+      window.location.href='school.html?id=${school.id}'" 
+      style="cursor: pointer; padding: 16px; min-height: auto; margin-bottom: 0;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+        <span class="card__board board--${boardKey}" style="font-size:0.7rem; padding: 2px 6px;">${safe(school.board)}</span>
+        <span class="rating__stars" style="font-size:0.8rem; font-weight: 600;">⭐ ${Number(school.rating).toFixed(1)}</span>
+      </div>
+      <h4 class="card__name" style="font-size: 1rem; margin-bottom: 4px;">${safe(school.name)}</h4>
+      <p class="card__location" style="font-size: 0.8rem; margin-bottom: 12px; color: var(--clr-text-sec);">
+        ${safe(school.location)}, ${safe(school.city)}
+      </p>
+      <div class="card__meta" style="margin-bottom: 0; display:flex; gap: 8px;">
+        <span class="meta-chip" style="font-size:0.8rem;">${safe(school.fees ?? '—')}</span>
+        ${feeCatHTML}
+      </div>
+    </article>
+  `;
+}
+
 /* ─── Main renderer ───────────────────────────────────── */
-function renderSchool(school) {
+function renderSchool(school, allSchools = []) {
+  window.currentSchoolId = school.id;
   document.title = `${school.name} — Scholr`;
   const container = document.getElementById("school-container");
 
@@ -239,16 +274,20 @@ function renderSchool(school) {
   const aboutText = school.smart_summary || description;
 
   /* --- Admission status --- */
-  const admissionsOpen = school.admissions_open;
   let admissionBadge = '';
-  if (admissionsOpen === true) {
-    admissionBadge = `<span class="admission-badge admission-badge--open">
-      <span class="admission-dot"></span> Admissions Open
-    </span>`;
-  } else if (admissionsOpen === false) {
-    admissionBadge = `<span class="admission-badge admission-badge--closed">
-      <span class="admission-dot"></span> Admissions Closed
-    </span>`;
+  if (window.ScholrAdmissions) {
+    admissionBadge = window.ScholrAdmissions.renderStatusChip(school);
+  } else {
+    const admissionsOpen = school.admissions_open;
+    if (admissionsOpen === true) {
+      admissionBadge = `<span class="admission-badge admission-badge--open">
+        <span class="admission-dot"></span> Admissions Open
+      </span>`;
+    } else if (admissionsOpen === false) {
+      admissionBadge = `<span class="admission-badge admission-badge--closed">
+        <span class="admission-dot"></span> Admissions Closed
+      </span>`;
+    }
   }
 
   /* --- Trust & Verification Block --- */
@@ -307,6 +346,9 @@ function renderSchool(school) {
           <span class="stat-value">${safe(school.type)}</span>
         </div>` : ''}
       </div>
+
+      <!-- ── ADMISSION TIMELINE ─────────────────── -->
+      ${window.ScholrAdmissions ? window.ScholrAdmissions.renderTimeline(school) : ''}
 
       <!-- ── CONTACT & ACTIONS ──────────────────── -->
       ${hasContactActions ? `
@@ -378,14 +420,48 @@ function renderSchool(school) {
         ${trustSectionHTML}
       </div>
 
+      <!-- ── SIMILAR SCHOOLS ──────────────────────── -->
+      <div id="similar-schools-placeholder"></div>
     </div>
   `;
+
+  /* --- Render Similar Schools --- */
+  if (window.ScholrDiscovery && allSchools && allSchools.length > 0) {
+    const similar = window.ScholrDiscovery.getSimilarSchools(school, allSchools, 3);
+    if (similar.length > 0) {
+      const cardsHtml = similar.map(s => {
+        const reason = window.ScholrDiscovery.getRecommendationReason(s.reasons);
+        return `
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${buildMiniCardHTML(s.school)}
+            <span class="reason-badge" style="font-size: 0.75rem; color: var(--clr-blue-700); background: var(--clr-blue-50); padding: 4px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; margin-top: 4px; border: 1px solid var(--clr-blue-100);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              ${safe(reason)}
+            </span>
+          </div>
+        `;
+      }).join('');
+
+      const similarContainer = document.getElementById('similar-schools-placeholder');
+      if (similarContainer) {
+        similarContainer.innerHTML = `
+          <hr class="detail__divider">
+          <div class="detail__section detail__similar">
+            <h2 class="section-heading">Similar Schools You May Like</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 16px;">
+              ${cardsHtml}
+            </div>
+          </div>
+        `;
+      }
+    }
+  }
 }
 
 // Hook up Suggest an Update button right after render
 const oldRenderSchool = renderSchool;
-renderSchool = function(school) {
-  oldRenderSchool(school);
+renderSchool = function(school, allSchools = []) {
+  oldRenderSchool(school, allSchools);
   
   const suggestBtn = document.getElementById('suggest-btn-trigger');
   if (suggestBtn && window.ScholrTrust) {
@@ -415,6 +491,21 @@ renderSchool = function(school) {
   trackContact('btn-call', 'phone');
   trackContact('btn-maps', 'maps');
   trackContact('btn-email', 'email');
+
+  // Hook up admissions analytics
+  if (window.ScholrAdmissions && window.ScholrAnalytics) {
+    const timeline = document.getElementById('admission-timeline');
+    if (timeline) {
+      window.ScholrAnalytics.trackAdmissionTimelineViewed(school.id);
+      const statusChips = document.querySelectorAll('.admission-status-chip');
+      statusChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          const statusText = window.ScholrAdmissions.getAdmissionStatus(school);
+          window.ScholrAnalytics.trackAdmissionStatusClicked(school.id, statusText);
+        });
+      });
+    }
+  }
 };
 
 /* ── CLAIM SCHOOL MODAL LOGIC ──────────────────────────── */

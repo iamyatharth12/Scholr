@@ -130,12 +130,30 @@
   const resetBtn  = document.getElementById('reset-btn');
   const boardSel  = document.getElementById('board-filter');
   const feeSel    = document.getElementById('fee-filter');
+  const ratingSel = document.getElementById('rating-filter');
+  const hostelCb  = document.getElementById('filter-hostel');
+  const transCb   = document.getElementById('filter-transport');
+  const sportsCb  = document.getElementById('filter-sports');
+  const adminCb   = document.getElementById('filter-admissions');
 
   async function applyFilters() {
     const board = boardSel.value;
     const fee   = feeSel.value;
+    const minRating = ratingSel ? ratingSel.value : '';
     
-    if (window.ScholrAnalytics) window.ScholrAnalytics.trackFilterUsage(board, fee);
+    const facilities = [];
+    if (hostelCb && hostelCb.checked) facilities.push('hostel');
+    if (transCb && transCb.checked) facilities.push('transport');
+    if (sportsCb && sportsCb.checked) facilities.push('sports');
+    
+    const admissionsOpen = adminCb ? adminCb.checked : false;
+    
+    if (window.ScholrAnalytics) {
+      window.ScholrAnalytics.trackFilterUsage(board, fee);
+      if (facilities.length > 0) window.ScholrAnalytics.trackAdvancedFilterUsed('facilities', facilities.join(','));
+      if (minRating) window.ScholrAnalytics.trackAdvancedFilterUsed('rating', minRating);
+      if (admissionsOpen) window.ScholrAnalytics.trackAdvancedFilterUsed('admissions_open', true);
+    }
 
     boardSel.disabled = true;
     feeSel.disabled = true;
@@ -144,7 +162,7 @@
     const originalText = applyBtn.textContent;
     applyBtn.textContent = 'Applying...';
 
-    await window.Scholr.filterSchools({ board, fee });
+    await window.Scholr.filterSchools({ board, fee, minRating, facilities, admissionsOpen });
 
     boardSel.disabled = false;
     feeSel.disabled = false;
@@ -155,6 +173,7 @@
 
   boardSel.addEventListener('change', applyFilters);
   feeSel.addEventListener('change', applyFilters);
+  if (ratingSel) ratingSel.addEventListener('change', applyFilters);
 
   applyBtn.addEventListener('click', async () => {
     await applyFilters();
@@ -164,13 +183,79 @@
   resetBtn.addEventListener('click', async () => {
     boardSel.value = '';
     feeSel.value   = '';
+    if (ratingSel) ratingSel.value = '';
+    if (hostelCb) hostelCb.checked = false;
+    if (transCb) transCb.checked = false;
+    if (sportsCb) sportsCb.checked = false;
+    if (adminCb) adminCb.checked = false;
     slider.value   = 5;
     updateSlider();
     
     resetBtn.disabled = true;
-    await window.Scholr.fetchSchools();
+    await window.Scholr.filterSchools({}); // Reset filters client-side
     resetBtn.disabled = false;
   });
+
+  /* ══════════════════════════════════
+     Recommendations Group Rendering
+  ══════════════════════════════════ */
+  window.addEventListener('scholr:schools_loaded', (e) => {
+    if (window.ScholrDiscovery) {
+      const groups = window.ScholrDiscovery.buildRecommendationGroups(e.detail);
+      renderRecommendationGroups(groups);
+    }
+  });
+
+  function renderRecommendationGroups(groups) {
+    const section = document.getElementById('recommendations');
+    const container = document.getElementById('recommendation-groups');
+    if (!section || !container) return;
+
+    if (!groups || groups.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+
+    let html = '<div class="recommendations__header"><h2 class="recommendations__title">Scholr Recommendations</h2><p class="recommendations__sub">Curated lists based on verified data and focus areas.</p></div>';
+    
+    groups.forEach(group => {
+      const cardsHtml = group.schools.map((school, i) => window.Scholr.buildCardHTML(school, i)).join('');
+      
+      html += `
+        <div class="recommendation-group">
+          <h3 class="recommendation-group__title"><i class="fas ${group.icon}"></i> ${group.title}</h3>
+          <div class="cards-grid">
+            ${cardsHtml}
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+
+    // Wire up events for the newly rendered cards
+    container.querySelectorAll('.card__cta').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (window.ScholrAnalytics) {
+          window.ScholrAnalytics.trackRecommendationClicked('group_cta', btn.dataset.id);
+        }
+        window.location.href = `school.html?id=${btn.dataset.id}`;
+      });
+    });
+
+    // Save buttons in recommendation area
+    container.querySelectorAll('.save-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const isNowSaved = window.Scholr.toggleSave(id);
+        btn.innerHTML = isNowSaved ? '★ Saved' : '☆ Save';
+        btn.setAttribute('aria-label', isNowSaved ? 'Saved' : 'Save');
+      });
+    });
+  }
 
   /* ══════════════════════════════════
      Initial load — fetch all schools

@@ -365,49 +365,49 @@ function renderSchools(data) {
 async function fetchSchools() {
   showLoadingState();
 
-  const { data, error } = await db
-    .from('schools')
-    .select('*')
-    .order('rating', { ascending: false });
+  if (!window.Scholr.allSchools) {
+    const { data, error } = await db
+      .from('schools')
+      .select('*')
+      .order('rating', { ascending: false });
 
-  if (error) {
-    console.error('[Scholr] Supabase fetch error:', error);
-    showErrorState(error.message);
-    return;
+    if (error) {
+      console.error('[Scholr] Supabase fetch error:', error);
+      showErrorState(error.message);
+      return;
+    }
+    window.Scholr.allSchools = data;
   }
 
-  renderSchools(data);
+  renderSchools(window.Scholr.allSchools);
+  
+  // Dispatch custom event to notify UI that schools are loaded
+  window.dispatchEvent(new CustomEvent('scholr:schools_loaded', { detail: window.Scholr.allSchools }));
 }
 
 /* ─────────────────────────────────────────────────────────
    FETCH — filtered by board + fee tier
 ───────────────────────────────────────────────────────── */
 
-async function filterByBoard(board) {
+async function filterSchools(filters = {}) {
   showLoadingState();
-  let query = db.from('schools').select('*').order('rating', { ascending: false });
-  if (board) query = query.ilike('board', board);
-  const { data, error } = await query;
-  if (error) { showErrorState(error.message); return; }
+
+  if (!window.Scholr.allSchools) await fetchSchools();
+
+  let data = window.Scholr.allSchools;
+  
+  if (window.ScholrDiscovery) {
+    data = window.ScholrDiscovery.filterSchools(data, filters);
+  } else {
+    // Fallback
+    if (filters.board) data = data.filter(s => s.board && s.board.toLowerCase() === filters.board.toLowerCase());
+    if (filters.fee) {
+      const feeTierMap = { low: s => feeTierOf(s.fees) === 'low', medium: s => feeTierOf(s.fees) === 'medium', high: s => feeTierOf(s.fees) === 'high' };
+      data = data.filter(feeTierMap[filters.fee] || (() => true));
+    }
+  }
+
   renderSchools(data);
-}
-
-async function filterSchools({ board = '', fee = '' } = {}) {
-  showLoadingState();
-
-  let query = db.from('schools').select('*').order('rating', { ascending: false });
-  if (board) query = query.ilike('board', board);
-
-  const { data, error } = await query;
-  if (error) { showErrorState(error.message); return; }
-
-  const feeTierMap = {
-    low:    s => feeTierOf(s.fees) === 'low',
-    medium: s => feeTierOf(s.fees) === 'medium',
-    high:   s => feeTierOf(s.fees) === 'high',
-  };
-  const filtered = fee && feeTierMap[fee] ? data.filter(feeTierMap[fee]) : data;
-  renderSchools(filtered);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -439,17 +439,21 @@ function showErrorState(msg) {
 
 async function searchSchools(queryStr) {
   const safeQuery = queryStr.replace(/[,%]/g, '').trim();
-  if (!safeQuery) { renderSchools([]); return; }
+  if (!safeQuery) { renderSchools(window.Scholr.allSchools || []); return; }
 
   showLoadingState();
+  if (!window.Scholr.allSchools) await fetchSchools();
 
-  const { data, error } = await db
-    .from('schools')
-    .select('*')
-    .or(`name.ilike.%${safeQuery}%,location.ilike.%${safeQuery}%`)
-    .order('rating', { ascending: false });
+  let data = window.Scholr.allSchools;
+  
+  if (window.ScholrDiscovery) {
+    data = window.ScholrDiscovery.smartSearch(data, safeQuery);
+    if (window.ScholrAnalytics) window.ScholrAnalytics.trackSmartSearchUsed(safeQuery, data.length);
+  } else {
+    // Fallback
+    data = data.filter(s => (s.name && s.name.toLowerCase().includes(safeQuery.toLowerCase())) || (s.location && s.location.toLowerCase().includes(safeQuery.toLowerCase())));
+  }
 
-  if (error) { showErrorState(error.message); return; }
   renderSchools(data);
 }
 
@@ -475,9 +479,10 @@ async function loadSavedSchools() {
    EXPORTS
 ───────────────────────────────────────────────────────── */
 window.Scholr = {
+  allSchools: null,
   fetchSchools,
   renderSchools,
-  filterByBoard,
+  buildCardHTML,
   filterSchools,
   searchSchools,
   loadSavedSchools,
