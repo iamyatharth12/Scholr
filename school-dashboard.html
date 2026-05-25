@@ -259,6 +259,12 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               Trust &amp; Verification
             </button>
+            
+            <!-- Platform Admin Moderation Sidebar trigger (Visible for test reviews) -->
+            <button class="dash-nav-btn" data-tab="tab-moderation" id="sidebar-moderation-btn" style="border: 1.5px dashed var(--clr-dash-brand); color: var(--clr-dash-brand); font-weight: 700; margin-top: 24px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              Moderation Queue (Admin)
+            </button>
           </nav>
         </div>
 
@@ -275,6 +281,16 @@
 
       <!-- Workspace Body Section -->
       <section class="dash-content">
+        
+        <!-- Dynamic Pending Review Banner -->
+        <div id="dashboard-pending-banner" style="display:none; align-items:center; gap:14px; background:var(--clr-dash-warning-bg); border:1.5px dashed var(--clr-dash-warning); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:28px;">
+          <span style="font-size:1.4rem;">⌛</span>
+          <div style="flex-grow:1;">
+            <span style="font-weight:700; color:var(--clr-dash-text-pri); font-size:0.875rem; display:block; margin-bottom:2px;">Moderated Publishing Cycle: Pending Edits</span>
+            <span style="font-size:0.75rem; color:var(--clr-dash-text-sec);">This school currently has profile or admissions modifications awaiting moderator approval. Newly saved details will go live on the directory once approved.</span>
+          </div>
+        </div>
+
         <form id="form-dashboard" novalidate>
           
           <!-- A. TAB: PROFILE SECTION -->
@@ -327,7 +343,7 @@
                   <textarea id="prof-desc" class="dash-textarea" rows="4" placeholder="Brief summary of your school's vision, philosophy, and history..."></textarea>
                 </div>
 
-                <!-- Transport & Hostel toggles added here -->
+                <!-- Transport & Hostel checkboxes -->
                 <div class="form-group form-group-full" style="display: flex; gap: 32px; border-top: 1px solid var(--clr-dash-border); padding-top: 20px; margin-top: 10px; flex-wrap: wrap;">
                   <div class="toggle-container">
                     <label class="toggle-switch">
@@ -423,7 +439,7 @@
               <p class="dash-subtitle">Upload official brand logo and up to 4 campus photos using Supabase Storage.</p>
             </div>
 
-            <!-- Logo Card with File Upload -->
+            <!-- Logo Card -->
             <div class="dash-card">
               <div class="dash-card-header">
                 <h3 class="dash-card-title">Brand Identity</h3>
@@ -442,13 +458,13 @@
                     Delete
                   </button>
                   <span class="dash-input-help">Supports square formats (PNG, JPG). Saved to secure storage folder.</span>
-                  <!-- Hidden field to hold Logo URL value -->
+                  <!-- Hidden Logo field -->
                   <input type="hidden" id="gal-logo">
                 </div>
               </div>
             </div>
 
-            <!-- Gallery Images Grid Card with File Upload Dropzones -->
+            <!-- Gallery Showcase -->
             <div class="dash-card">
               <div class="dash-card-header">
                 <h3 class="dash-card-title">Campus Images Showcase</h3>
@@ -477,7 +493,7 @@
                       <option value="Events & Culture">Events &amp; Culture</option>
                     </select>
                     <button type="button" class="btn-delete-gallery-img" id="btn-del-0" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
-                    <!-- Hidden field to hold Image URL value -->
+                    <!-- Hidden field URL -->
                     <input type="hidden" id="gal-url-0" class="gallery-url-holder">
                   </div>
                 </div>
@@ -503,7 +519,7 @@
                       <option value="Events & Culture">Events &amp; Culture</option>
                     </select>
                     <button type="button" class="btn-delete-gallery-img" id="btn-del-1" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
-                    <!-- Hidden field to hold Image URL value -->
+                    <!-- Hidden field URL -->
                     <input type="hidden" id="gal-url-1" class="gallery-url-holder">
                   </div>
                 </div>
@@ -529,7 +545,7 @@
                       <option value="Events & Culture">Events &amp; Culture</option>
                     </select>
                     <button type="button" class="btn-delete-gallery-img" id="btn-del-2" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
-                    <!-- Hidden field to hold Image URL value -->
+                    <!-- Hidden field URL -->
                     <input type="hidden" id="gal-url-2" class="gallery-url-holder">
                   </div>
                 </div>
@@ -555,7 +571,7 @@
                       <option value="Events & Culture">Events &amp; Culture</option>
                     </select>
                     <button type="button" class="btn-delete-gallery-img" id="btn-del-3" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
-                    <!-- Hidden field to hold Image URL value -->
+                    <!-- Hidden field URL -->
                     <input type="hidden" id="gal-url-3" class="gallery-url-holder">
                   </div>
                 </div>
@@ -668,6 +684,21 @@
               </div>
             </div>
 
+            <!-- Moderated updates queue history container -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Profile Update Submissions History</h3>
+                <p class="dash-card-subtitle">History of profile, gallery, and admissions updates submitted to the moderation queue.</p>
+              </div>
+
+              <div id="verification-history-container" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Populated dynamically by JS -->
+                <p style="font-size: 0.85rem; color: var(--clr-dash-text-sec); font-style: italic; margin: 0;">
+                  No updates submitted to moderation yet.
+                </p>
+              </div>
+            </div>
+
             <!-- Card: Auditor logs -->
             <div class="dash-card">
               <div class="dash-card-header">
@@ -680,6 +711,25 @@
                 <p id="ver-reviewer-notes" style="font-size:0.875rem; color: var(--clr-dash-text-sec); line-height: 1.5; margin:0; font-style: italic;">
                   No review comments logged yet.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- E. TAB: PLATFORM ADMIN MODERATION QUEUE -->
+          <div class="dash-tab-view" id="tab-moderation" style="display: none;">
+            <div class="dash-header">
+              <span class="dash-pretitle">Platform Moderation</span>
+              <h2 class="dash-title">Admin Review Queue</h2>
+              <p class="dash-subtitle">Review, approve, or reject pending profile edits submitted by school administrators.</p>
+            </div>
+
+            <!-- Moderation requests list container -->
+            <div id="moderation-queue-container">
+              <!-- Dynamically populated by school-dashboard.js -->
+              <div class="dash-card" style="text-align: center; padding: 48px 24px;">
+                <span style="font-size: 2.5rem; display: block; margin-bottom: 12px;">🎉</span>
+                <h4 style="margin:0 0 8px 0; font-size:1.1rem; color:var(--clr-dash-text-pri);">Queue is Clear</h4>
+                <p style="color:var(--clr-dash-text-sec); font-size:0.85rem; margin:0;">No school updates are currently awaiting moderation review.</p>
               </div>
             </div>
           </div>

@@ -116,6 +116,20 @@ window.ScholrAnalytics = {
 
   trackDashboardRecommendationClicked: function(recommendedSchoolId) {
     this.trackEvent('dashboard_recommendation_clicked', { recommended_school_id: recommendedSchoolId });
+  },
+
+  // ── Level 6: School Dashboard & Moderation ──
+  trackProfileUpdate: function(schoolId) {
+    this.trackEvent('school_profile_updated', { school_id: schoolId });
+  },
+  trackGalleryUpload: function(schoolId, imageUrl) {
+    this.trackEvent('gallery_uploaded', { school_id: schoolId, image_url: imageUrl });
+  },
+  trackAdmissionUpdate: function(schoolId) {
+    this.trackEvent('admission_updated', { school_id: schoolId });
+  },
+  trackPendingUpdateSubmitted: function(schoolId, updateType) {
+    this.trackEvent('pending_update_submitted', { school_id: schoolId, update_type: updateType });
   }
 };
 

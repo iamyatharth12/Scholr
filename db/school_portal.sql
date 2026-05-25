@@ -1,6 +1,6 @@
 -- ═══════════════════════════════════════════════════════════
 --  Scholr — Level 6: School Management Portal Migration
---  Contains: Foundations + Profile Management Extensions
+--  Contains: Foundations + Profile Management + Moderation
 --  Run in: Supabase Dashboard > SQL Editor > New Query
 -- ═══════════════════════════════════════════════════════════
 
@@ -255,3 +255,168 @@ CREATE POLICY "Allow school admins to delete media"
       )
     )
   );
+
+
+-- ═══════════════════════════════════════════════════════════
+--  8. MODERATION MODULE SCHEMA CHANGES (Pending Queue System)
+-- ═══════════════════════════════════════════════════════════
+
+-- Create school_pending_updates Table
+CREATE TABLE IF NOT EXISTS public.school_pending_updates (
+  id             UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+  school_id      UUID          NOT NULL REFERENCES public.schools(id) ON DELETE CASCADE,
+  update_type    TEXT          NOT NULL, -- 'profile_edit' | 'gallery_upload' | 'admissions_update'
+  payload        JSONB         NOT NULL, -- JSON payload of the edits
+  submitted_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+  reviewed       BOOLEAN       NOT NULL DEFAULT FALSE,
+  approved       BOOLEAN,                -- NULL = pending, TRUE = approved, FALSE = rejected
+  reviewed_at    TIMESTAMPTZ,
+  reviewer_notes TEXT
+);
+
+COMMENT ON TABLE public.school_pending_updates IS
+  'Scholr — pending profile changes queue awaiting administrator moderation.';
+
+-- Enable Row-Level Security
+ALTER TABLE public.school_pending_updates ENABLE ROW LEVEL SECURITY;
+
+-- Policy A: Authenticated school admins can read their own pending updates
+DROP POLICY IF EXISTS "School admins can read own pending updates" ON public.school_pending_updates;
+CREATE POLICY "School admins can read own pending updates"
+  ON public.school_pending_updates FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.school_admins
+      WHERE school_admins.id = auth.uid()
+        AND school_admins.school_id = school_pending_updates.school_id
+        AND school_admins.approved = TRUE
+    )
+  );
+
+-- Policy B: Authenticated school admins can insert pending updates for their school
+DROP POLICY IF EXISTS "School admins can submit pending updates" ON public.school_pending_updates;
+CREATE POLICY "School admins can submit pending updates"
+  ON public.school_pending_updates FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.school_admins
+      WHERE school_admins.id = auth.uid()
+        AND school_admins.school_id = school_pending_updates.school_id
+        AND school_admins.approved = TRUE
+    )
+  );
+
+-- Policy C: Platform administrators (global select/update permissions)
+DROP POLICY IF EXISTS "Global admins can manage all updates" ON public.school_pending_updates;
+CREATE POLICY "Global admins can manage all updates"
+  ON public.school_pending_updates FOR ALL
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+
+-- 9. Automatic Moderation Database Trigger: apply_approved_update
+CREATE OR REPLACE FUNCTION public.apply_approved_update()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Execute merging only when reviewed = TRUE and approved = TRUE
+  IF NEW.reviewed = TRUE AND NEW.approved = TRUE AND (OLD.approved IS DISTINCT FROM TRUE OR OLD.reviewed IS DISTINCT FROM TRUE) THEN
+    
+    UPDATE public.schools
+    SET
+      name = COALESCE((NEW.payload->>'name'), name),
+      board = COALESCE((NEW.payload->>'board'), board),
+      fees = COALESCE((NEW.payload->>'fees'), fees),
+      location = COALESCE((NEW.payload->>'location'), location),
+      description = COALESCE((NEW.payload->>'description'), description),
+      website = COALESCE((NEW.payload->>'website'), website),
+      email = COALESCE((NEW.payload->>'email'), email),
+      phone = COALESCE((NEW.payload->>'phone'), phone),
+      maps_link = COALESCE((NEW.payload->>'maps_link'), maps_link),
+      logo_url = COALESCE((NEW.payload->>'logo_url'), logo_url),
+      
+      admissions_open = CASE 
+        WHEN (NEW.payload->'admissions_open') IS NOT NULL 
+        THEN (NEW.payload->'admissions_open')::BOOLEAN 
+        ELSE admissions_open 
+      END,
+      
+      application_start_date = CASE 
+        WHEN (NEW.payload->'application_start_date') IS NOT NULL AND (NEW.payload->>'application_start_date') IS DISTINCT FROM ''
+        THEN (NEW.payload->>'application_start_date')::DATE 
+        ELSE application_start_date 
+      END,
+      
+      application_deadline = CASE 
+        WHEN (NEW.payload->'application_deadline') IS NOT NULL AND (NEW.payload->>'application_deadline') IS DISTINCT FROM ''
+        THEN (NEW.payload->>'application_deadline')::DATE 
+        ELSE application_deadline 
+      END,
+      
+      interview_date = CASE 
+        WHEN (NEW.payload->'interview_date') IS NOT NULL AND (NEW.payload->>'interview_date') IS DISTINCT FROM ''
+        THEN (NEW.payload->>'interview_date')::DATE 
+        ELSE interview_date 
+      END,
+      
+      result_date = CASE 
+        WHEN (NEW.payload->'result_date') IS NOT NULL AND (NEW.payload->>'result_date') IS DISTINCT FROM ''
+        THEN (NEW.payload->>'result_date')::DATE 
+        ELSE result_date 
+      END,
+      
+      session_start_date = CASE 
+        WHEN (NEW.payload->'session_start_date') IS NOT NULL AND (NEW.payload->>'session_start_date') IS DISTINCT FROM ''
+        THEN (NEW.payload->>'session_start_date')::DATE 
+        ELSE session_start_date 
+      END,
+      
+      admission_notes = COALESCE((NEW.payload->>'admission_notes'), admission_notes),
+      
+      has_transport = CASE 
+        WHEN (NEW.payload->'has_transport') IS NOT NULL 
+        THEN (NEW.payload->'has_transport')::BOOLEAN 
+        ELSE has_transport 
+      END,
+      
+      has_hostel = CASE 
+        WHEN (NEW.payload->'has_hostel') IS NOT NULL 
+        THEN (NEW.payload->'has_hostel')::BOOLEAN 
+        ELSE has_hostel 
+      END,
+      
+      -- Dynamic JSONB arrays parsing
+      facilities = CASE 
+        WHEN (NEW.payload->'facilities') IS NOT NULL 
+        THEN ARRAY(SELECT jsonb_array_elements_text(NEW.payload->'facilities')) 
+        ELSE facilities 
+      END,
+      
+      best_for = CASE 
+        WHEN (NEW.payload->'best_for') IS NOT NULL 
+        THEN ARRAY(SELECT jsonb_array_elements_text(NEW.payload->'best_for')) 
+        ELSE best_for 
+      END,
+      
+      gallery_urls = CASE 
+        WHEN (NEW.payload->'gallery_urls') IS NOT NULL 
+        THEN ARRAY(SELECT jsonb_array_elements_text(NEW.payload->'gallery_urls')) 
+        ELSE gallery_urls 
+      END,
+      
+      updated_at = NOW()
+    WHERE id = NEW.school_id;
+    
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Bind Trigger to school_pending_updates
+DROP TRIGGER IF EXISTS on_update_approved ON public.school_pending_updates;
+CREATE TRIGGER on_update_approved
+  AFTER UPDATE ON public.school_pending_updates
+  FOR EACH ROW EXECUTE FUNCTION public.apply_approved_update();

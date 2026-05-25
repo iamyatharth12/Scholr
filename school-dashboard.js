@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAdmissionsSwitch();
     setupGalleryUploads();
     setupCompletenessWatchers();
+    setupModerationAdminPanel();
 
     // Check existing session
     const { data: { session } } = await db.auth.getSession();
@@ -153,9 +154,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         populateDashboardUI(activeSchoolRecord);
         switchView('dashboard');
+        
+        // Refresh moderation lists
+        fetchVerificationHistory();
+        fetchModerationQueue();
       } else {
         // Option B: Registered but claim pending or no admin row created yet
-        // Retrieve their claim status to display friendly pending state
         const { data: claimRecord, error: claimErr } = await db
           .from('school_claim_requests')
           .select('*')
@@ -570,7 +574,6 @@ document.addEventListener('DOMContentLoaded', () => {
     score += galleryCount * 3.75;
 
     // 3. Admissions Data (20% total): Toggle (5%), key dates set (10%), notes (5%)
-    // Since toggle is active on form load, we add 5%
     score += 5;
     const hasDates = admStart.value || admDeadline.value || admSession.value;
     if (hasDates) score += 10;
@@ -635,7 +638,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── INTERACTIVE GALLERY UPLOADS (SUPABASE STORAGE) ──── */
   function setupGalleryUploads() {
-    // 1. Logo brand upload
     logoPreview.addEventListener('click', () => logoFileInput.click());
     btnUploadLogo.addEventListener('click', () => logoFileInput.click());
 
@@ -643,13 +645,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const file = logoFileInput.files[0];
       if (!file) return;
 
-      // Basic size validation (5MB max)
       if (file.size > 5 * 1024 * 1024) {
         showToast('error', 'File size exceeds 5MB limit.');
         return;
       }
 
-      // Show loader
       logoPreview.innerHTML = `
         <div class="upload-loading-overlay">
           <div class="upload-spinner"></div>
@@ -662,25 +662,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const ext = file.name.split('.').pop();
         const path = `logos/${activeSchoolId}/logo_${Date.now()}.${ext}`;
 
-        // Upload to bucket
         const { error } = await db.storage
           .from('school-media')
           .upload(path, file, { cacheControl: '3600', upsert: true });
 
         if (error) throw error;
 
-        // Get public URL
         const { data: { publicUrl } } = db.storage
           .from('school-media')
           .getPublicUrl(path);
 
-        // Update hidden inputs and previews
         document.getElementById('gal-logo').value = publicUrl;
         logoPreview.innerHTML = `<img src="${publicUrl}" style="width:100%;height:100%;object-fit:cover;" alt="Logo Preview">`;
         btnDeleteLogo.style.display = 'inline-block';
         
         showToast('success', 'Brand Logo uploaded to storage!');
-        calculateCompletenessScore(); // recalculate score
+        
+        // Track Gallery Analytics Event
+        if (window.ScholrAnalytics) window.ScholrAnalytics.trackGalleryUpload(activeSchoolId, publicUrl);
+        
+        calculateCompletenessScore();
 
       } catch (err) {
         console.error('[Scholr] Logo upload failed:', err);
@@ -696,17 +697,13 @@ document.addEventListener('DOMContentLoaded', () => {
       logoPreview.innerHTML = '🏫';
       btnDeleteLogo.style.display = 'none';
       showToast('success', 'Logo unlinked.');
-      calculateCompletenessScore(); // recalculate score
+      calculateCompletenessScore();
     });
 
-
-    // 2. Gallery 4 images dropzones
     const dropzones = document.querySelectorAll('.upload-dropzone');
     dropzones.forEach(zone => {
       zone.addEventListener('click', (e) => {
-        // Prevent click bubbling if delete overlay clicked
         if (e.target.closest('.btn-delete-overlay')) return;
-        
         const card = zone.closest('.gallery-card');
         const idx = card.dataset.index;
         document.getElementById(`file-input-${idx}`).click();
@@ -728,7 +725,6 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        // Show spinner
         const oldContent = prevBox.innerHTML;
         prevBox.innerHTML = `
           <div class="upload-loading-overlay">
@@ -741,19 +737,16 @@ document.addEventListener('DOMContentLoaded', () => {
           const ext = file.name.split('.').pop();
           const path = `gallery/${activeSchoolId}/img_${idx}_${Date.now()}.${ext}`;
 
-          // Upload to storage
           const { error } = await db.storage
             .from('school-media')
             .upload(path, file, { cacheControl: '3600', upsert: true });
 
           if (error) throw error;
 
-          // Fetch public URL
           const { data: { publicUrl } } = db.storage
             .from('school-media')
             .getPublicUrl(path);
 
-          // Update inputs & previews
           document.getElementById(`gal-url-${idx}`).value = publicUrl;
           prevBox.innerHTML = `
             <div class="gallery-image-wrapper">
@@ -764,7 +757,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
           document.getElementById(`btn-del-${idx}`).style.display = 'block';
           showToast('success', `Gallery image #${parseInt(idx,10)+1} uploaded!`);
-          calculateCompletenessScore(); // recalculate score
+          
+          // Track Gallery Upload Analytics Event
+          if (window.ScholrAnalytics) window.ScholrAnalytics.trackGalleryUpload(activeSchoolId, publicUrl);
+          
+          calculateCompletenessScore();
 
         } catch (err) {
           console.error('[Scholr] Gallery upload failed:', err);
@@ -774,7 +771,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // Delete handlers on the cards & overlays
     document.body.addEventListener('click', (e) => {
       const delOverlayBtn = e.target.closest('.btn-delete-overlay');
       const delCardBtn = e.target.closest('.btn-delete-gallery-img');
@@ -788,11 +784,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const urlInput = document.getElementById(`gal-url-${idx}`);
         const delBtn = document.getElementById(`btn-del-${idx}`);
 
-        // Reset
         urlInput.value = '';
         delBtn.style.display = 'none';
 
-        // Re-render dropzone
         const categorySelect = document.getElementById(`gal-category-${idx}`);
         const categoryLabel = categorySelect.options[categorySelect.selectedIndex].text;
         prevBox.innerHTML = `
@@ -804,11 +798,10 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         showToast('success', 'Gallery image unlinked.');
-        calculateCompletenessScore(); // recalculate score
+        calculateCompletenessScore();
       }
     });
 
-    // Re-bind dropzone category labels when select option changes
     const categorySelects = document.querySelectorAll('.gallery-category-select');
     categorySelects.forEach(select => {
       select.addEventListener('change', () => {
@@ -816,7 +809,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const idx = card.dataset.index;
         const prevBox = document.getElementById(`gal-prev-${idx}`);
         
-        // Only update if there is NO image currently loaded
         if (prevBox.querySelector('.upload-dropzone')) {
           const label = select.options[select.selectedIndex].text;
           prevBox.querySelector('.dropzone-text').textContent = `Upload ${label}`;
@@ -841,15 +833,12 @@ document.addEventListener('DOMContentLoaded', () => {
     profPhone.value = school.phone || '';
     profMaps.value = school.maps_link || '';
 
-    // Transport & Hostel checkboxes mapping
     profTransport.checked = school.has_transport === true;
     profHostel.checked = school.has_hostel === true;
 
     // Facilities Chips
     clearFacilityChips();
     const facilities = school.facilities || [];
-    // Ensure Transport/Hostel don't double render as standalone chips if we manage them via checkboxes,
-    // but we let them exist and just filter them to render cleanly in chips input
     facilities.forEach(f => {
       if (f.toLowerCase() !== 'transport' && f.toLowerCase() !== 'hostel') {
         addFacilityChip(f);
@@ -933,11 +922,10 @@ document.addEventListener('DOMContentLoaded', () => {
       verReviewerNotes.textContent = 'Listing validated by Scholr Moderation Team. Profile is active.';
     }
 
-    // Calculate dynamic completeness score on load
     calculateCompletenessScore();
   }
 
-  /* ── SUBMIT UPDATE SAVE PROCESS ──────────────────────── */
+  /* ── SUBMIT UPDATE PROCESS (MODERATED QUEUE) ──────────── */
   formDashboard.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -947,8 +935,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnSaveChanges.disabled = true;
-    btnSaveChanges.textContent = 'Saving Changes…';
-    setSaveMsg('Processing update...', 'var(--clr-dash-brand)');
+    btnSaveChanges.textContent = 'Submitting to Queue…';
+    setSaveMsg('Submitting changes to moderation queue...', 'var(--clr-dash-brand)');
 
     // Sync transport & hostel checkbox values to facilities list to keep discoverability intact!
     const synchronizedFacilities = [...facilityChipsList];
@@ -989,37 +977,254 @@ document.addEventListener('DOMContentLoaded', () => {
       interview_date: admInterview.value || null,
       result_date: admResult.value || null,
       session_start_date: admSession.value || null,
-      admission_notes: admNotes.value.trim() || null,
-      updated_at: new Date().toISOString()
+      admission_notes: admNotes.value.trim() || null
     };
 
     try {
+      // MODERATION WORKFLOW: Insert row inside school_pending_updates
       const { error } = await db
-        .from('schools')
-        .update(updates)
-        .eq('id', activeSchoolId);
+        .from('school_pending_updates')
+        .insert({
+          school_id: activeSchoolId,
+          update_type: 'profile_edit',
+          payload: updates,
+          reviewed: false
+        });
 
       if (error) throw error;
 
-      showToast('success', '✓ Profile updates published successfully!');
-      setSaveMsg('All changes saved and live!', 'var(--clr-dash-success)');
+      showToast('success', '✓ Changes submitted to moderation review queue!');
+      setSaveMsg('Pending review by platform moderators.', 'var(--clr-dash-warning)');
       
-      // Update local cache records
-      activeSchoolRecord = Object.assign(activeSchoolRecord, updates);
-      populateDashboardUI(activeSchoolRecord);
+      // Track engagement analytics events
+      if (window.ScholrAnalytics) {
+        // General pending submit
+        window.ScholrAnalytics.trackPendingUpdateSubmitted(activeSchoolId, 'profile_edit');
+        
+        // Track specific sections edited
+        window.ScholrAnalytics.trackProfileUpdate(activeSchoolId);
+        window.ScholrAnalytics.trackAdmissionUpdate(activeSchoolId);
+      }
+
+      // Sync and reload queue timelines
+      fetchVerificationHistory();
+      fetchModerationQueue();
 
     } catch (err) {
-      console.error('[Scholr] Save failed:', err);
-      showToast('error', err.message || 'Row Level Security blocked the update.');
-      setSaveMsg('Failed to sync. RLS unauthorized.', 'var(--clr-dash-danger)');
+      console.error('[Scholr] Moderation save failed:', err);
+      showToast('error', err.message || 'Moderation submission blocked.');
+      setSaveMsg('Failed to submit moderation request.', 'var(--clr-dash-danger)');
     } finally {
       btnSaveChanges.disabled = false;
       btnSaveChanges.textContent = 'Save Dashboard Edits';
       setTimeout(() => {
         setSaveMsg('', '');
-      }, 5000);
+      }, 7000);
     }
   });
+
+  /* ── RENDER VERIFICATION SUBMISSIONS HISTORY TIMELINE ── */
+  async function fetchVerificationHistory() {
+    const historyBox = document.getElementById('verification-history-container');
+    if (!historyBox || !activeSchoolId) return;
+
+    try {
+      const { data, error } = await db
+        .from('school_pending_updates')
+        .select('*')
+        .eq('school_id', activeSchoolId)
+        .order('submitted_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        historyBox.innerHTML = `
+          <p style="font-size: 0.85rem; color: var(--clr-dash-text-sec); font-style: italic; margin: 0;">
+            No updates submitted to moderation yet.
+          </p>
+        `;
+        return;
+      }
+
+      historyBox.innerHTML = data.map(item => {
+        let badgeClass = 'status-badge--limited';
+        let statusLabel = '⌛ Pending Review';
+        if (item.reviewed) {
+          badgeClass = item.approved ? 'status-badge--verified' : 'status-badge--danger';
+          statusLabel = item.approved ? '✓ Approved & Published' : '❌ Rejected';
+        }
+
+        const dateLabel = new Date(item.submitted_at).toLocaleDateString('en-IN', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        return `
+          <div style="background:#ffffff; border:1px solid var(--clr-dash-border); border-radius:8px; padding:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; box-sizing: border-box; text-align: left;">
+            <div>
+              <span style="font-weight:600; font-size:0.85rem; display:block; color:var(--clr-dash-text-pri); margin-bottom:4px;">Profile Update Request</span>
+              <span style="font-size:0.75rem; color:var(--clr-dash-text-mut);">${dateLabel}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap: wrap;">
+              <span class="status-badge ${badgeClass}" style="font-size:0.75rem; padding:4px 10px;">${statusLabel}</span>
+              ${item.reviewer_notes ? `<span style="font-size:0.75rem; color:var(--clr-dash-text-sec); font-style:italic;" title="${safe(item.reviewer_notes)}">💬 Comments</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Show the pending warning banner on dashboard if there are active pending edits!
+      const hasPending = data.some(item => !item.reviewed);
+      const banner = document.getElementById('dashboard-pending-banner');
+      if (banner) {
+        banner.style.display = hasPending ? 'flex' : 'none';
+      }
+
+    } catch (err) {
+      console.warn('[Scholr] Verification history fetch failed:', err);
+    }
+  }
+
+  /* ── LIGHTWEIGHT ADMIN MODERATION PANEL QUEUE ───────── */
+  function setupModerationAdminPanel() {
+    // Admin Review Buttons Approval Handler
+    document.body.addEventListener('click', async (e) => {
+      const approveBtn = e.target.closest('.btn-moderation-approve');
+      const rejectBtn = e.target.closest('.btn-moderation-reject');
+
+      if (approveBtn || rejectBtn) {
+        e.preventDefault();
+        const updateId = approveBtn ? approveBtn.dataset.id : rejectBtn.dataset.id;
+        const isApproved = !!approveBtn;
+        const notesInput = document.getElementById(`reviewer-notes-${updateId}`);
+        const notes = notesInput ? notesInput.value.trim() : '';
+
+        const targetBtn = approveBtn || rejectBtn;
+        targetBtn.disabled = true;
+        targetBtn.textContent = 'Processing…';
+
+        try {
+          // Perform Moderation decision call
+          const { error } = await db
+            .from('school_pending_updates')
+            .update({
+              reviewed: true,
+              approved: isApproved,
+              reviewed_at: new Date().toISOString(),
+              reviewer_notes: notes || (isApproved ? 'Approved by platform administrator.' : 'Rejected by moderator.')
+            })
+            .eq('id', updateId);
+
+          if (error) throw error;
+
+          showToast('success', isApproved ? '✓ Changes approved & published live!' : '❌ Changes rejected and archived.');
+          
+          // Refresh Moderation Queue
+          fetchModerationQueue();
+          
+          // Sync current session state (in case moderator updates their own school)
+          const { data: { session } } = await db.auth.getSession();
+          handleSessionChanged(session);
+
+        } catch (err) {
+          console.error('[Scholr] Moderation review failed:', err);
+          showToast('error', err.message || 'Action failed.');
+          targetBtn.disabled = false;
+          targetBtn.textContent = isApproved ? 'Approve & Publish' : 'Reject Edits';
+        }
+      }
+    });
+  }
+
+  async function fetchModerationQueue() {
+    const queueBox = document.getElementById('moderation-queue-container');
+    if (!queueBox) return;
+
+    try {
+      const { data, error } = await db
+        .from('school_pending_updates')
+        .select('*, schools(name, board, fees, location)')
+        .eq('reviewed', false)
+        .order('submitted_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        queueBox.innerHTML = `
+          <div class="dash-card" style="text-align: center; padding: 48px 24px;">
+            <span style="font-size: 2.5rem; display: block; margin-bottom: 12px;">🎉</span>
+            <h4 style="margin:0 0 8px 0; font-size:1.1rem; color:var(--clr-dash-text-pri);">Queue is Clear</h4>
+            <p style="color:var(--clr-dash-text-sec); font-size:0.85rem; margin:0;">No school updates are currently awaiting moderation review.</p>
+          </div>
+        `;
+        return;
+      }
+
+      queueBox.innerHTML = data.map(item => {
+        const dateLabel = new Date(item.submitted_at).toLocaleDateString('en-IN', {
+          day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        const schoolName = item.schools ? item.schools.name : 'Unknown School';
+        const payload = item.payload;
+
+        // Visual change list diff builder
+        let changeListHtml = '';
+        for (const [key, val] of Object.entries(payload)) {
+          if (key === 'updated_at') continue;
+
+          let displayVal = val;
+          if (Array.isArray(val)) displayVal = val.join(', ');
+          if (typeof val === 'boolean') displayVal = val ? 'Yes' : 'No';
+          if (val === null || val === undefined || val === '') displayVal = '— (Cleared)';
+
+          const keyLabel = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+          changeListHtml += `
+            <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f1f5f9; font-size:0.8rem; text-align: left;">
+              <span style="font-weight:600; color:var(--clr-dash-text-sec); margin-right: 12px;">${keyLabel}:</span>
+              <span style="color:var(--clr-dash-text-pri); text-align:right; font-family:monospace; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${safe(displayVal)}">${safe(displayVal)}</span>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="dash-card moderation-request-card" id="mod-card-${item.id}" style="margin-bottom:20px; text-align: left; box-sizing: border-box;">
+            <div class="dash-card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; padding-bottom:12px;">
+              <div>
+                <h4 style="margin:0 0 4px 0; font-size:1.05rem; font-weight:800; color:var(--clr-dash-text-pri);">${safe(schoolName)}</h4>
+                <span style="font-size:0.75rem; color:var(--clr-dash-text-mut);">${dateLabel}</span>
+              </div>
+              <span class="status-badge status-badge--community" style="font-size:0.7rem; padding:4px 8px;">Pending Review</span>
+            </div>
+            
+            <div style="background:var(--clr-dash-bg); border:1px solid var(--clr-dash-border); border-radius:8px; padding:14px; margin-bottom:20px;">
+              <h5 style="margin:0 0 10px 0; font-size:0.75rem; font-weight:700; color:var(--clr-dash-text-mut); text-transform:uppercase; letter-spacing:0.02em;">Proposed Changes Payload</h5>
+              <div style="max-height:180px; overflow-y:auto; padding-right:6px;">
+                ${changeListHtml}
+              </div>
+            </div>
+
+            <!-- Notes field -->
+            <div class="form-group" style="margin-bottom:16px;">
+              <input type="text" id="reviewer-notes-${item.id}" class="dash-input" style="font-size:0.8rem; padding:8px 12px;" placeholder="Feedback or rejection reason (optional)">
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+              <button type="button" class="btn btn--outline btn-moderation-reject" data-id="${item.id}" style="color:var(--clr-dash-danger); border-color:rgba(239,68,68,0.3); padding:8px 16px; font-size:0.8rem; font-weight:600;">
+                Reject Edits
+              </button>
+              <button type="button" class="btn btn--primary btn-moderation-approve" data-id="${item.id}" style="background-color:var(--clr-dash-success); border-color:var(--clr-dash-success); padding:8px 20px; font-size:0.8rem; font-weight:600;">
+                Approve &amp; Publish
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+    } catch (err) {
+      console.warn('[Scholr] Moderation queue fetch failed:', err);
+    }
+  }
 
   function setSaveMsg(text, clr) {
     saveStatusMsg.textContent = text;
