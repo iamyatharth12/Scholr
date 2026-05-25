@@ -435,6 +435,113 @@ function renderSchool(school, allSchools = []) {
         </div>
         ` : ''}
         ${trustSectionHTML}
+
+        <!-- ── PARENT TRUST SUMMARY CARD ─────────── -->
+        ${(() => {
+          // Dynamic calculation on public details page
+          let score = 0;
+          
+          // 1. Description (20%)
+          const desc = school.description || '';
+          if (desc.trim().length > 50) score += 20;
+          else if (desc.trim().length > 0) score += 10;
+          
+          // 2. Media Assets (25% total): Logo (10%), Gallery images (15% - 3.75% per image)
+          if (school.logo_url) score += 10;
+          const gallery = school.gallery_urls || [];
+          score += Math.min(4, gallery.length) * 3.75;
+          
+          // 3. Admissions Data (20% total): Toggle (5%), dates (10%), notes (5%)
+          if (school.admissions_open !== null && school.admissions_open !== undefined) score += 5;
+          const hasDates = school.application_start_date || school.application_deadline || school.session_start_date;
+          if (hasDates) score += 10;
+          if (school.admission_notes && school.admission_notes.trim().length > 0) score += 5;
+          
+          // 4. Facilities (10%) & Best For Tags (5%)
+          const facilities = school.facilities || [];
+          if (facilities.length >= 3) score += 10;
+          else if (facilities.length > 0) score += 5;
+          
+          const bestFor = school.best_for || [];
+          if (bestFor.length >= 2) score += 5;
+          else if (bestFor.length > 0) score += 2.5;
+          
+          // 5. Contact Channels (10% total - 2.5% each)
+          if (school.website) score += 2.5;
+          if (school.email) score += 2.5;
+          if (school.phone) score += 2.5;
+          if (school.maps_link) score += 2.5;
+          
+          // 6. Verification State (10%)
+          const tier = school.verification_level || 'limited';
+          if (tier.toLowerCase().includes('verified')) score += 10;
+          else if (tier.toLowerCase().includes('community')) score += 5;
+          else score += 2;
+          
+          score = Math.round(score);
+          if (score > 100) score = 100;
+
+          let tierLabel = 'Limited Information';
+          let tierColor = '#b45309'; // amber
+          let tierIcon = '⚠️';
+          if (score >= 80) {
+            tierLabel = 'Excellent Profile';
+            tierColor = '#10b981'; // emerald
+            tierIcon = '✅';
+          } else if (score >= 50) {
+            tierLabel = 'Good Coverage';
+            tierColor = '#4f46e5'; // brand indigo
+            tierIcon = 'ℹ️';
+          }
+
+          const refreshLabel = window.ScholrTrust ? window.ScholrTrust.formatRelativeTime(school.updated_at || school.last_updated) : 'Recent';
+
+          return `
+            <div class="parent-trust-card" style="margin-top:20px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); box-sizing: border-box; text-align: left;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px;">
+                <div>
+                  <h3 style="font-size:1.1rem; font-weight:700; margin:0 0 4px 0; color:#0f172a;">Parent Trust Summary</h3>
+                  <p style="font-size:0.85rem; color:#475569; margin:0;">Rich, verified, and school-maintained information profile.</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <div style="text-align:right;">
+                    <span style="display:block; font-size:0.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.03em;">Richness Score</span>
+                    <span style="font-size:1.5rem; font-weight:800; color:${tierColor};">${score}%</span>
+                  </div>
+                  <div style="width:48px; height:48px; border-radius:50%; border:3px solid #e2e8f0; display:flex; align-items:center; justify-content:center; font-size:1.25rem; background:#ffffff;">
+                    ${tierIcon}
+                  </div>
+                </div>
+              </div>
+              
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:16px;">
+                <div style="display:flex; gap:10px; align-items:center; background:#ffffff; border:1px solid #f1f5f9; padding:12px; border-radius:8px; box-shadow: 0 1px 2px rgba(0,0,0,0.01);">
+                  <span style="font-size:1.25rem;">🛡️</span>
+                  <div>
+                    <span style="display:block; font-size:0.7rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Listing Claim</span>
+                    <span style="font-size:0.85rem; font-weight:700; color:${school.is_claimed ? '#10b981' : '#64748b'};">
+                      ${school.is_claimed ? 'Claimed Profile' : 'Unclaimed'}
+                    </span>
+                  </div>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center; background:#ffffff; border:1px solid #f1f5f9; padding:12px; border-radius:8px; box-shadow: 0 1px 2px rgba(0,0,0,0.01);">
+                  <span style="font-size:1.25rem;">🏅</span>
+                  <div>
+                    <span style="display:block; font-size:0.7rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Verification</span>
+                    <span style="font-size:0.85rem; font-weight:700; color:#3b82f6;">${school.verification_level || 'Limited Data'}</span>
+                  </div>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center; background:#ffffff; border:1px solid #f1f5f9; padding:12px; border-radius:8px; box-shadow: 0 1px 2px rgba(0,0,0,0.01);">
+                  <span style="font-size:1.25rem;">🕒</span>
+                  <div>
+                    <span style="display:block; font-size:0.7rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Freshness</span>
+                    <span style="font-size:0.85rem; font-weight:700; color:#475569;">${refreshLabel || 'Recent'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        })()}
       </div>
 
       <!-- ── SIMILAR SCHOOLS ──────────────────────── -->

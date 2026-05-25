@@ -965,3 +965,131 @@ input:checked + .toggle-slider:before {
   font-weight: 600;
   color: var(--clr-dash-text-pri);
 }
+
+/* ── EXTENSIONS FOR UPLOAD DROPZONES & PREVIEWS ─────── */
+.upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  border: 2px dashed var(--clr-dash-border);
+  border-radius: var(--radius-md);
+  background-color: var(--clr-dash-bg);
+  transition: var(--transition-normal);
+  box-sizing: border-box;
+}
+
+.upload-dropzone:hover {
+  border-color: var(--clr-dash-brand);
+  background-color: var(--clr-dash-brand-light);
+}
+
+.dropzone-icon {
+  font-size: 1.75rem;
+  margin-bottom: 6px;
+  transition: transform 0.2s ease;
+}
+
+.upload-dropzone:hover .dropzone-icon {
+  transform: translateY(-2px) scale(1.08);
+}
+
+.dropzone-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--clr-dash-brand);
+  margin-bottom: 2px;
+}
+
+.dropzone-help {
+  font-size: 0.65rem;
+  color: var(--clr-dash-text-mut);
+}
+
+.gallery-image-box {
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.gallery-image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.gallery-image-box:hover img {
+  transform: scale(1.05);
+}
+
+/* Upload spinner overlay */
+.upload-loading-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: var(--radius-md);
+}
+
+.upload-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--clr-dash-border);
+  border-top-color: var(--clr-dash-brand);
+  border-radius: 50%;
+  animation: spinner-rotate 0.8s linear infinite;
+  margin-bottom: 8px;
+}
+
+.upload-loading-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--clr-dash-brand);
+}
+
+@keyframes spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Image Delete corner overlays */
+.gallery-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.btn-delete-overlay {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background-color: rgba(239, 68, 68, 0.9);
+  color: #ffffff;
+  border: none;
+  font-size: 1.15rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-fast);
+  z-index: 5;
+  padding: 0;
+  line-height: 1;
+}
+
+.btn-delete-overlay:hover {
+  background-color: var(--clr-dash-danger);
+  transform: scale(1.1);
+}
+

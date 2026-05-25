@@ -55,15 +55,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const profEmail = document.getElementById('prof-email');
   const profPhone = document.getElementById('prof-phone');
   const profMaps = document.getElementById('prof-maps');
+  const profTransport = document.getElementById('prof-transport');
+  const profHostel = document.getElementById('prof-hostel');
 
   // Dashboard Fields: Facilities
   const facilitiesChipsContainer = document.getElementById('facilities-chips-container');
   const facilitiesChipInput = document.getElementById('facilities-chip-input');
 
+  // Dashboard Fields: Best For (Tags)
+  const bestForChipsContainer = document.getElementById('bestfor-chips-container');
+  const bestForChipInput = document.getElementById('bestfor-chip-input');
+
   // Dashboard Fields: Gallery
   const galLogo = document.getElementById('gal-logo');
   const logoPreview = document.getElementById('logo-preview');
-  const galleryInputs = document.querySelectorAll('.gallery-input');
+  const logoFileInput = document.getElementById('logo-file-input');
+  const btnUploadLogo = document.getElementById('btn-upload-logo');
+  const btnDeleteLogo = document.getElementById('btn-delete-logo');
 
   // Dashboard Fields: Admissions
   const admOpen = document.getElementById('adm-open');
@@ -86,6 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeSchoolRecord = null;
   let activeAdminRecord = null;
   let facilityChipsList = [];
+  let bestForChipsList = [];
 
   /* ── INITIALIZATION ─────────────────────────────────── */
   initApp();
@@ -94,8 +103,10 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAuthUIListeners();
     setupDashboardNavigation();
     setupFacilitiesChipsManager();
-    setupGalleryLivePreviews();
+    setupBestForChipsManager();
     setupAdmissionsSwitch();
+    setupGalleryUploads();
+    setupCompletenessWatchers();
 
     // Check existing session
     const { data: { session } } = await db.auth.getSession();
@@ -125,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showGlobalLoading(true);
 
     try {
-      // 1. Fetch school admin record
+      // Fetch school admin record
       const { data: adminRecord, error: adminErr } = await db
         .from('school_admins')
         .select('*, schools(*)')
@@ -194,7 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       registerSchoolSelect.innerHTML = '<option value="">— Select your school listing —</option>';
       (data || []).forEach(school => {
-        // Let them claim even if already claimed in case of testing, but show a nice tag
         const tag = school.is_claimed ? ' [Claimed]' : '';
         const opt = document.createElement('option');
         opt.value = school.id;
@@ -202,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         registerSchoolSelect.appendChild(opt);
       });
 
-      // Add a manual fallback
+      // Add manual fallback
       const optManual = document.createElement('option');
       optManual.value = 'manual';
       optManual.textContent = '+ My school is not listed here';
@@ -371,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (data) {
           showToast('success', '⚡ Sandbox Bypass: Claim approved instantly!');
-          // Sync state instantly
+          // Sync session instantly
           const { data: { session } } = await db.auth.getSession();
           handleSessionChanged(session);
         } else {
@@ -425,6 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (val) {
           addFacilityChip(val);
           facilitiesChipInput.value = '';
+          calculateCompletenessScore(); // Update score on edit
         }
       }
     });
@@ -435,6 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = chipEl.querySelector('.chip-text').textContent;
         facilityChipsList = facilityChipsList.filter(c => c !== text);
         chipEl.remove();
+        calculateCompletenessScore(); // Update score on edit
       }
     });
   }
@@ -463,42 +475,53 @@ document.addEventListener('DOMContentLoaded', () => {
     facilitiesChipsContainer.querySelectorAll('.chip-tag').forEach(c => c.remove());
   }
 
-  /* ── GALLERY & LOGO LIVE PREVIEWS ────────────────────── */
-  function setupGalleryLivePreviews() {
-    // Logo change preview
-    galLogo.addEventListener('input', () => {
-      const url = galLogo.value.trim();
-      if (isValidUrl(url)) {
-        logoPreview.innerHTML = `<img src="${url}" alt="School Logo">`;
-      } else {
-        logoPreview.innerHTML = '🏫';
+  /* ── DYNAMIC CHIPS MANAGER (BEST FOR) ─────────────────── */
+  function setupBestForChipsManager() {
+    bestForChipInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const val = bestForChipInput.value.replace(/,/g, '').trim();
+        if (val) {
+          addBestForChip(val);
+          bestForChipInput.value = '';
+          calculateCompletenessScore(); // Update score on edit
+        }
       }
     });
 
-    // Gallery changes preview
-    galleryInputs.forEach(input => {
-      input.addEventListener('input', () => {
-        const idx = input.dataset.index;
-        const url = input.value.trim();
-        const prevBox = document.getElementById(`gal-prev-${idx}`);
-        
-        if (isValidUrl(url)) {
-          prevBox.innerHTML = `<img src="${url}" alt="Campus Image ${parseInt(idx, 10)+1}">`;
-        } else {
-          prevBox.innerHTML = '📸';
-        }
-      });
+    bestForChipsContainer.addEventListener('click', (e) => {
+      if (e.target.closest('.chip-delete')) {
+        const chipEl = e.target.closest('.chip-tag');
+        const text = chipEl.querySelector('.chip-text').textContent;
+        bestForChipsList = bestForChipsList.filter(c => c !== text);
+        chipEl.remove();
+        calculateCompletenessScore(); // Update score on edit
+      }
     });
   }
 
-  function triggerLivePreviewsRefresh() {
-    galLogo.dispatchEvent(new Event('input'));
-    galleryInputs.forEach(input => input.dispatchEvent(new Event('input')));
+  function addBestForChip(text) {
+    const trimmed = text.trim();
+    if (!trimmed || bestForChipsList.includes(trimmed)) return;
+
+    bestForChipsList.push(trimmed);
+    const chipHtml = `
+      <span class="chip-tag bf--default">
+        <span class="chip-text">${safe(trimmed)}</span>
+        <button type="button" class="chip-delete" aria-label="Delete chip">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </span>
+    `;
+    bestForChipsContainer.insertAdjacentHTML('beforebegin', chipHtml);
   }
 
-  function isValidUrl(str) {
-    if (!str) return false;
-    return str.startsWith('http://') || str.startsWith('https://');
+  function clearBestForChips() {
+    bestForChipsList = [];
+    bestForChipsContainer.querySelectorAll('.chip-tag').forEach(c => c.remove());
   }
 
   /* ── ADMISSIONS TOGGLE SWITCH ───────────────────────── */
@@ -506,6 +529,299 @@ document.addEventListener('DOMContentLoaded', () => {
     admOpen.addEventListener('change', () => {
       admStatusLabel.textContent = admOpen.checked ? 'Admissions Open' : 'Admissions Closed';
       admStatusLabel.style.color = admOpen.checked ? 'var(--clr-dash-brand)' : 'var(--clr-dash-text-pri)';
+    });
+  }
+
+  /* ── REAL-TIME COMPLETENESS WATCHERS ────────────────── */
+  function setupCompletenessWatchers() {
+    const inputsToWatch = [
+      profDesc, profWebsite, profEmail, profPhone, profMaps,
+      admStart, admDeadline, admSession, admNotes, admOpen
+    ];
+
+    inputsToWatch.forEach(input => {
+      if (input) {
+        input.addEventListener('input', calculateCompletenessScore);
+        input.addEventListener('change', calculateCompletenessScore);
+      }
+    });
+  }
+
+  /* ── PROFILE COMPLETENESS CALCULATION ───────────────── */
+  function calculateCompletenessScore() {
+    let score = 0;
+
+    // 1. Description (20%)
+    const descText = profDesc.value.trim();
+    if (descText.length > 50) score += 20;
+    else if (descText.length > 0) score += 10;
+
+    // 2. Media Assets (25% total): Logo (10%), Gallery images (15% - 3.75% per image)
+    const logoUrlVal = document.getElementById('gal-logo').value.trim();
+    if (logoUrlVal) score += 10;
+
+    let galleryCount = 0;
+    for (let i = 0; i < 4; i++) {
+      const urlInput = document.getElementById(`gal-url-${i}`);
+      if (urlInput && urlInput.value.trim()) {
+        galleryCount++;
+      }
+    }
+    score += galleryCount * 3.75;
+
+    // 3. Admissions Data (20% total): Toggle (5%), key dates set (10%), notes (5%)
+    // Since toggle is active on form load, we add 5%
+    score += 5;
+    const hasDates = admStart.value || admDeadline.value || admSession.value;
+    if (hasDates) score += 10;
+    if (admNotes.value.trim().length > 0) score += 5;
+
+    // 4. Facilities (10%) & Best For Tags (5%)
+    if (facilityChipsList.length >= 3) score += 10;
+    else if (facilityChipsList.length > 0) score += 5;
+
+    if (bestForChipsList.length >= 2) score += 5;
+    else if (bestForChipsList.length > 0) score += 2.5;
+
+    // 5. Contact Channels (10% total - 2.5% each)
+    if (profWebsite.value.trim()) score += 2.5;
+    if (profEmail.value.trim()) score += 2.5;
+    if (profPhone.value.trim()) score += 2.5;
+    if (profMaps.value.trim()) score += 2.5;
+
+    // 6. Verification Status (10%)
+    if (activeSchoolRecord) {
+      const tier = activeSchoolRecord.verification_level || 'limited';
+      if (tier.toLowerCase().includes('verified')) score += 10;
+      else if (tier.toLowerCase().includes('community')) score += 5;
+      else score += 2;
+    } else {
+      score += 2;
+    }
+
+    score = Math.round(score);
+    if (score > 100) score = 100;
+
+    // Update UI elements
+    const completenessScoreEl = document.getElementById('completeness-score');
+    const completenessBarEl = document.getElementById('completeness-bar');
+    const completenessTierEl = document.getElementById('completeness-tier');
+    const completenessTierIconEl = document.getElementById('completeness-tier-icon');
+
+    if (completenessScoreEl) completenessScoreEl.textContent = `${score}%`;
+    if (completenessBarEl) {
+      completenessBarEl.style.width = `${score}%`;
+      
+      if (score >= 80) {
+        completenessBarEl.style.backgroundColor = 'var(--clr-dash-success)';
+        completenessTierEl.textContent = 'Excellent Profile';
+        completenessTierEl.style.color = 'var(--clr-dash-success)';
+        completenessTierIconEl.textContent = '✅';
+      } else if (score >= 50) {
+        completenessBarEl.style.backgroundColor = 'var(--clr-dash-brand)';
+        completenessTierEl.textContent = 'Good Coverage';
+        completenessTierEl.style.color = 'var(--clr-dash-brand)';
+        completenessTierIconEl.textContent = 'ℹ️';
+      } else {
+        completenessBarEl.style.backgroundColor = 'var(--clr-dash-warning)';
+        completenessTierEl.textContent = 'Limited Info';
+        completenessTierEl.style.color = 'var(--clr-dash-warning)';
+        completenessTierIconEl.textContent = '⚠️';
+      }
+    }
+
+    return score;
+  }
+
+  /* ── INTERACTIVE GALLERY UPLOADS (SUPABASE STORAGE) ──── */
+  function setupGalleryUploads() {
+    // 1. Logo brand upload
+    logoPreview.addEventListener('click', () => logoFileInput.click());
+    btnUploadLogo.addEventListener('click', () => logoFileInput.click());
+
+    logoFileInput.addEventListener('change', async () => {
+      const file = logoFileInput.files[0];
+      if (!file) return;
+
+      // Basic size validation (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('error', 'File size exceeds 5MB limit.');
+        return;
+      }
+
+      // Show loader
+      logoPreview.innerHTML = `
+        <div class="upload-loading-overlay">
+          <div class="upload-spinner"></div>
+          <span class="upload-loading-text">Uploading...</span>
+        </div>
+      `;
+      btnUploadLogo.disabled = true;
+
+      try {
+        const ext = file.name.split('.').pop();
+        const path = `logos/${activeSchoolId}/logo_${Date.now()}.${ext}`;
+
+        // Upload to bucket
+        const { error } = await db.storage
+          .from('school-media')
+          .upload(path, file, { cacheControl: '3600', upsert: true });
+
+        if (error) throw error;
+
+        // Get public URL
+        const { data: { publicUrl } } = db.storage
+          .from('school-media')
+          .getPublicUrl(path);
+
+        // Update hidden inputs and previews
+        document.getElementById('gal-logo').value = publicUrl;
+        logoPreview.innerHTML = `<img src="${publicUrl}" style="width:100%;height:100%;object-fit:cover;" alt="Logo Preview">`;
+        btnDeleteLogo.style.display = 'inline-block';
+        
+        showToast('success', 'Brand Logo uploaded to storage!');
+        calculateCompletenessScore(); // recalculate score
+
+      } catch (err) {
+        console.error('[Scholr] Logo upload failed:', err);
+        showToast('error', err.message || 'Storage upload blocked.');
+        logoPreview.innerHTML = '🏫';
+      } finally {
+        btnUploadLogo.disabled = false;
+      }
+    });
+
+    btnDeleteLogo.addEventListener('click', () => {
+      document.getElementById('gal-logo').value = '';
+      logoPreview.innerHTML = '🏫';
+      btnDeleteLogo.style.display = 'none';
+      showToast('success', 'Logo unlinked.');
+      calculateCompletenessScore(); // recalculate score
+    });
+
+
+    // 2. Gallery 4 images dropzones
+    const dropzones = document.querySelectorAll('.upload-dropzone');
+    dropzones.forEach(zone => {
+      zone.addEventListener('click', (e) => {
+        // Prevent click bubbling if delete overlay clicked
+        if (e.target.closest('.btn-delete-overlay')) return;
+        
+        const card = zone.closest('.gallery-card');
+        const idx = card.dataset.index;
+        document.getElementById(`file-input-${idx}`).click();
+      });
+    });
+
+    const fileInputs = document.querySelectorAll('.file-input');
+    fileInputs.forEach(input => {
+      input.addEventListener('change', async () => {
+        const file = input.files[0];
+        if (!file) return;
+
+        const card = input.closest('.gallery-card');
+        const idx = card.dataset.index;
+        const prevBox = document.getElementById(`gal-prev-${idx}`);
+
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('error', 'File size exceeds 5MB limit.');
+          return;
+        }
+
+        // Show spinner
+        const oldContent = prevBox.innerHTML;
+        prevBox.innerHTML = `
+          <div class="upload-loading-overlay">
+            <div class="upload-spinner"></div>
+            <span class="upload-loading-text">Uploading...</span>
+          </div>
+        `;
+
+        try {
+          const ext = file.name.split('.').pop();
+          const path = `gallery/${activeSchoolId}/img_${idx}_${Date.now()}.${ext}`;
+
+          // Upload to storage
+          const { error } = await db.storage
+            .from('school-media')
+            .upload(path, file, { cacheControl: '3600', upsert: true });
+
+          if (error) throw error;
+
+          // Fetch public URL
+          const { data: { publicUrl } } = db.storage
+            .from('school-media')
+            .getPublicUrl(path);
+
+          // Update inputs & previews
+          document.getElementById(`gal-url-${idx}`).value = publicUrl;
+          prevBox.innerHTML = `
+            <div class="gallery-image-wrapper">
+              <img src="${publicUrl}" style="width:100%;height:100%;object-fit:cover;" alt="Campus Image Preview">
+              <button type="button" class="btn-delete-overlay" data-index="${idx}">&times;</button>
+            </div>
+          `;
+
+          document.getElementById(`btn-del-${idx}`).style.display = 'block';
+          showToast('success', `Gallery image #${parseInt(idx,10)+1} uploaded!`);
+          calculateCompletenessScore(); // recalculate score
+
+        } catch (err) {
+          console.error('[Scholr] Gallery upload failed:', err);
+          showToast('error', err.message || 'Gallery upload failed.');
+          prevBox.innerHTML = oldContent;
+        }
+      });
+    });
+
+    // Delete handlers on the cards & overlays
+    document.body.addEventListener('click', (e) => {
+      const delOverlayBtn = e.target.closest('.btn-delete-overlay');
+      const delCardBtn = e.target.closest('.btn-delete-gallery-img');
+
+      if (delOverlayBtn || delCardBtn) {
+        e.stopPropagation();
+        
+        const idx = delOverlayBtn ? delOverlayBtn.dataset.index : delCardBtn.id.replace('btn-del-', '');
+        const card = document.querySelector(`.gallery-card[data-index="${idx}"]`);
+        const prevBox = document.getElementById(`gal-prev-${idx}`);
+        const urlInput = document.getElementById(`gal-url-${idx}`);
+        const delBtn = document.getElementById(`btn-del-${idx}`);
+
+        // Reset
+        urlInput.value = '';
+        delBtn.style.display = 'none';
+
+        // Re-render dropzone
+        const categorySelect = document.getElementById(`gal-category-${idx}`);
+        const categoryLabel = categorySelect.options[categorySelect.selectedIndex].text;
+        prevBox.innerHTML = `
+          <div class="upload-dropzone" id="dropzone-${idx}">
+            <span class="dropzone-icon">📸</span>
+            <span class="dropzone-text">Upload ${categoryLabel}</span>
+            <span class="dropzone-help">PNG/JPG up to 5MB</span>
+          </div>
+        `;
+
+        showToast('success', 'Gallery image unlinked.');
+        calculateCompletenessScore(); // recalculate score
+      }
+    });
+
+    // Re-bind dropzone category labels when select option changes
+    const categorySelects = document.querySelectorAll('.gallery-category-select');
+    categorySelects.forEach(select => {
+      select.addEventListener('change', () => {
+        const card = select.closest('.gallery-card');
+        const idx = card.dataset.index;
+        const prevBox = document.getElementById(`gal-prev-${idx}`);
+        
+        // Only update if there is NO image currently loaded
+        if (prevBox.querySelector('.upload-dropzone')) {
+          const label = select.options[select.selectedIndex].text;
+          prevBox.querySelector('.dropzone-text').textContent = `Upload ${label}`;
+        }
+      });
     });
   }
 
@@ -525,24 +841,67 @@ document.addEventListener('DOMContentLoaded', () => {
     profPhone.value = school.phone || '';
     profMaps.value = school.maps_link || '';
 
+    // Transport & Hostel checkboxes mapping
+    profTransport.checked = school.has_transport === true;
+    profHostel.checked = school.has_hostel === true;
+
     // Facilities Chips
     clearFacilityChips();
     const facilities = school.facilities || [];
-    facilities.forEach(addFacilityChip);
+    // Ensure Transport/Hostel don't double render as standalone chips if we manage them via checkboxes,
+    // but we let them exist and just filter them to render cleanly in chips input
+    facilities.forEach(f => {
+      if (f.toLowerCase() !== 'transport' && f.toLowerCase() !== 'hostel') {
+        addFacilityChip(f);
+      }
+    });
+
+    // Best For Chips
+    clearBestForChips();
+    const bestFor = school.best_for || [];
+    bestFor.forEach(addBestForChip);
 
     // Gallery Fields
-    galLogo.value = school.logo_url || '';
-    const gallery = school.gallery_urls || [];
-    for (let i = 0; i < 4; i++) {
-      const input = document.getElementById(`gal-url-${i}`);
-      if (input) input.value = gallery[i] || '';
-    }
-    triggerLivePreviewsRefresh();
-
+    document.getElementById('gal-logo').value = school.logo_url || '';
     if (school.logo_url) {
+      logoPreview.innerHTML = `<img src="${school.logo_url}" style="width:100%;height:100%;object-fit:cover;" alt="Logo Preview">`;
+      btnDeleteLogo.style.display = 'inline-block';
       sidebarSchoolAvatar.innerHTML = `<img src="${school.logo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" alt="Logo">`;
     } else {
+      logoPreview.innerHTML = '🏫';
+      btnDeleteLogo.style.display = 'none';
       sidebarSchoolAvatar.innerHTML = '🏫';
+    }
+
+    const gallery = school.gallery_urls || [];
+    for (let i = 0; i < 4; i++) {
+      const urlInput = document.getElementById(`gal-url-${i}`);
+      const prevBox = document.getElementById(`gal-prev-${i}`);
+      const delBtn = document.getElementById(`btn-del-${i}`);
+      const categorySelect = document.getElementById(`gal-category-${i}`);
+      
+      const currentUrl = gallery[i] || '';
+      urlInput.value = currentUrl;
+
+      if (currentUrl) {
+        prevBox.innerHTML = `
+          <div class="gallery-image-wrapper">
+            <img src="${currentUrl}" style="width:100%;height:100%;object-fit:cover;" alt="Campus Image Preview">
+            <button type="button" class="btn-delete-overlay" data-index="${i}">&times;</button>
+          </div>
+        `;
+        delBtn.style.display = 'block';
+      } else {
+        const categoryLabel = categorySelect.options[categorySelect.selectedIndex].text;
+        prevBox.innerHTML = `
+          <div class="upload-dropzone" id="dropzone-${i}">
+            <span class="dropzone-icon">📸</span>
+            <span class="dropzone-text">Upload ${categoryLabel}</span>
+            <span class="dropzone-help">PNG/JPG up to 5MB</span>
+          </div>
+        `;
+        delBtn.style.display = 'none';
+      }
     }
 
     // Admissions Fields
@@ -573,6 +932,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       verReviewerNotes.textContent = 'Listing validated by Scholr Moderation Team. Profile is active.';
     }
+
+    // Calculate dynamic completeness score on load
+    calculateCompletenessScore();
   }
 
   /* ── SUBMIT UPDATE SAVE PROCESS ──────────────────────── */
@@ -588,6 +950,15 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSaveChanges.textContent = 'Saving Changes…';
     setSaveMsg('Processing update...', 'var(--clr-dash-brand)');
 
+    // Sync transport & hostel checkbox values to facilities list to keep discoverability intact!
+    const synchronizedFacilities = [...facilityChipsList];
+    if (profTransport.checked && !synchronizedFacilities.includes('Transport')) {
+      synchronizedFacilities.push('Transport');
+    }
+    if (profHostel.checked && !synchronizedFacilities.includes('Hostel')) {
+      synchronizedFacilities.push('Hostel');
+    }
+
     // Gather Gallery Inputs
     const galleryUrls = [];
     for (let i = 0; i < 4; i++) {
@@ -602,12 +973,15 @@ document.addEventListener('DOMContentLoaded', () => {
       fees: profFees.value.trim(),
       location: profLocation.value.trim(),
       description: profDesc.value.trim(),
-      facilities: facilityChipsList,
+      facilities: synchronizedFacilities,
+      best_for: bestForChipsList,
+      has_transport: profTransport.checked,
+      has_hostel: profHostel.checked,
       website: profWebsite.value.trim() || null,
       email: profEmail.value.trim() || null,
       phone: profPhone.value.trim() || null,
       maps_link: profMaps.value.trim() || null,
-      logo_url: galLogo.value.trim() || null,
+      logo_url: document.getElementById('gal-logo').value.trim() || null,
       gallery_urls: galleryUrls,
       admissions_open: admOpen.checked,
       application_start_date: admStart.value || null,
@@ -627,7 +1001,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (error) throw error;
 
-      showToast('success', '✓ Listing edits published successfully!');
+      showToast('success', '✓ Profile updates published successfully!');
       setSaveMsg('All changes saved and live!', 'var(--clr-dash-success)');
       
       // Update local cache records
@@ -671,7 +1045,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     toastBox.appendChild(toast);
 
-    // Fade and delete
     setTimeout(() => {
       toast.style.opacity = '0';
       toast.style.transform = 'translateY(-10px)';

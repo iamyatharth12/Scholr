@@ -226,6 +226,21 @@
             </div>
           </div>
 
+          <!-- Profile Completeness Indicator Block -->
+          <div class="dash-completeness" style="padding: 16px 0; border-bottom: 1px solid var(--clr-dash-border); margin-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:600; margin-bottom:8px;">
+              <span style="color:var(--clr-dash-text-sec);">Profile Richness:</span>
+              <span id="completeness-score" style="color:var(--clr-dash-brand);">0%</span>
+            </div>
+            <div style="width:100%; height:8px; background:var(--clr-dash-border); border-radius:4px; overflow:hidden;">
+              <div id="completeness-bar" style="width:0%; height:100%; background:var(--clr-dash-brand); transition:width 0.4s ease, background 0.4s ease; border-radius:4px;"></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; margin-top:8px;">
+              <span style="font-size: 0.85rem;" id="completeness-tier-icon">⚠️</span>
+              <span id="completeness-tier" style="font-weight:700; text-transform:uppercase; font-size:0.7rem; color: var(--clr-dash-text-sec); letter-spacing:0.02em;">Limited Info</span>
+            </div>
+          </div>
+
           <!-- Navigation Links -->
           <nav class="dash-nav">
             <button class="dash-nav-btn active" data-tab="tab-profile">
@@ -267,7 +282,7 @@
             <div class="dash-header">
               <span class="dash-pretitle">Foundational Listing</span>
               <h2 class="dash-title">General School Profile</h2>
-              <p class="dash-subtitle">Update your official metadata, board associations, and description displayed on search lists.</p>
+              <p class="dash-subtitle">Update your official metadata, board associations, facilities, and contact details.</p>
             </div>
 
             <!-- Card: Details -->
@@ -311,6 +326,30 @@
                   <label for="prof-desc" class="dash-label">About / General Description</label>
                   <textarea id="prof-desc" class="dash-textarea" rows="4" placeholder="Brief summary of your school's vision, philosophy, and history..."></textarea>
                 </div>
+
+                <!-- Transport & Hostel toggles added here -->
+                <div class="form-group form-group-full" style="display: flex; gap: 32px; border-top: 1px solid var(--clr-dash-border); padding-top: 20px; margin-top: 10px; flex-wrap: wrap;">
+                  <div class="toggle-container">
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="prof-transport">
+                      <span class="toggle-slider"></span>
+                    </label>
+                    <div>
+                      <span class="toggle-label-text">Transport Facility Available</span>
+                      <span class="dash-input-help" style="margin: 0;">Does the school provide official school bus/van transport?</span>
+                    </div>
+                  </div>
+                  <div class="toggle-container">
+                    <label class="toggle-switch">
+                      <input type="checkbox" id="prof-hostel">
+                      <span class="toggle-slider"></span>
+                    </label>
+                    <div>
+                      <span class="toggle-label-text">Hostel/Boarding Available</span>
+                      <span class="dash-input-help" style="margin: 0;">Does the school offer on-campus boarding/residential hosteling?</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -328,6 +367,23 @@
                   <input type="text" class="chip-input-field" id="facilities-chip-input" placeholder="Type and press Enter...">
                 </div>
                 <span class="dash-input-help">Common listings: Smart Classrooms, Library, Science Labs, Swimming Pool, Transport, Sports Ground.</span>
+              </div>
+            </div>
+
+            <!-- Card: Recommendation Tags (Best For) -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Recommendation Tags (Best For)</h3>
+                <p class="dash-card-subtitle">Highlight key strengths (e.g. Best for Academics, Strong Sports Culture). Press Enter/Comma to add.</p>
+              </div>
+              
+              <div class="form-group">
+                <label class="dash-label">Highlight Tags</label>
+                <div class="chips-input-container" id="bestfor-chips-container">
+                  <!-- Chips inserted dynamically by JS -->
+                  <input type="text" class="chip-input-field" id="bestfor-chip-input" placeholder="Type and press Enter...">
+                </div>
+                <span class="dash-input-help">Common highlights: Best for Academics, Strong Sports Culture, Modern Infrastructure, Discipline Focused, Budget Friendly, Large Campus.</span>
               </div>
             </div>
 
@@ -364,10 +420,10 @@
             <div class="dash-header">
               <span class="dash-pretitle">Visual Assets</span>
               <h2 class="dash-title">Campus Gallery &amp; Logo</h2>
-              <p class="dash-subtitle">Upload or link images showing campus environments, classrooms, libraries, or events.</p>
+              <p class="dash-subtitle">Upload official brand logo and up to 4 campus photos using Supabase Storage.</p>
             </div>
 
-            <!-- Logo Card -->
+            <!-- Logo Card with File Upload -->
             <div class="dash-card">
               <div class="dash-card-header">
                 <h3 class="dash-card-title">Brand Identity</h3>
@@ -375,53 +431,132 @@
               </div>
 
               <div class="logo-upload-wrap">
-                <div class="logo-preview-box" id="logo-preview">🏫</div>
+                <div class="logo-preview-box" id="logo-preview" style="cursor:pointer;" title="Click to upload brand logo">🏫</div>
+                <input type="file" id="logo-file-input" accept="image/*" style="display:none;">
                 <div style="flex-grow: 1;">
-                  <label for="gal-logo" class="dash-label">Logo Image URL</label>
-                  <input type="url" id="gal-logo" class="dash-input" placeholder="https://domain.com/path-to-logo.png">
-                  <span class="dash-input-help">Supports standard web formats (PNG, JPG, SVG).</span>
+                  <label class="dash-label">Logo Image Upload</label>
+                  <button type="button" class="btn btn--outline" id="btn-upload-logo" style="padding: 8px 16px; font-size: 0.8rem; margin-bottom: 6px;">
+                    Choose Logo Image File
+                  </button>
+                  <button type="button" class="btn btn--ghost" id="btn-delete-logo" style="padding: 8px 12px; font-size: 0.8rem; color: var(--clr-dash-danger); display: none;">
+                    Delete
+                  </button>
+                  <span class="dash-input-help">Supports square formats (PNG, JPG). Saved to secure storage folder.</span>
+                  <!-- Hidden field to hold Logo URL value -->
+                  <input type="hidden" id="gal-logo">
                 </div>
               </div>
             </div>
 
-            <!-- Gallery Images Grid Card -->
+            <!-- Gallery Images Grid Card with File Upload Dropzones -->
             <div class="dash-card">
               <div class="dash-card-header">
                 <h3 class="dash-card-title">Campus Images Showcase</h3>
-                <p class="dash-card-subtitle">Provide up to 4 high-resolution links displaying campus facilities and student life.</p>
+                <p class="dash-card-subtitle">Upload high-resolution files representing facilities and classrooms. Click any card to upload.</p>
               </div>
 
               <div class="gallery-grid">
                 <!-- Image Card 1 -->
-                <div class="gallery-card">
-                  <div class="gallery-image-box" id="gal-prev-0">📸</div>
+                <div class="gallery-card" data-index="0">
+                  <div class="gallery-image-box" id="gal-prev-0">
+                    <div class="upload-dropzone" id="dropzone-0">
+                      <span class="dropzone-icon">📸</span>
+                      <span class="dropzone-text">Upload Campus View</span>
+                      <span class="dropzone-help">PNG/JPG up to 5MB</span>
+                    </div>
+                  </div>
+                  <input type="file" id="file-input-0" class="file-input" accept="image/*" style="display:none;">
                   <div class="gallery-card-body">
-                    <label for="gal-url-0" class="dash-label">Classrooms / General</label>
-                    <input type="url" id="gal-url-0" class="dash-input gallery-input" data-index="0" placeholder="Image URL">
+                    <label class="dash-label">Category</label>
+                    <select id="gal-category-0" class="dash-select gallery-category-select" style="font-size:0.8rem; padding:6px 10px;">
+                      <option value="Campus Overview">Campus Overview</option>
+                      <option value="Classrooms">Classrooms</option>
+                      <option value="Laboratories">Laboratories</option>
+                      <option value="Sports Facilities">Sports Facilities</option>
+                      <option value="Infrastructure">Infrastructure</option>
+                      <option value="Events & Culture">Events &amp; Culture</option>
+                    </select>
+                    <button type="button" class="btn-delete-gallery-img" id="btn-del-0" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
+                    <!-- Hidden field to hold Image URL value -->
+                    <input type="hidden" id="gal-url-0" class="gallery-url-holder">
                   </div>
                 </div>
+
                 <!-- Image Card 2 -->
-                <div class="gallery-card">
-                  <div class="gallery-image-box" id="gal-prev-1">📸</div>
+                <div class="gallery-card" data-index="1">
+                  <div class="gallery-image-box" id="gal-prev-1">
+                    <div class="upload-dropzone" id="dropzone-1">
+                      <span class="dropzone-icon">📸</span>
+                      <span class="dropzone-text">Upload Classrooms</span>
+                      <span class="dropzone-help">PNG/JPG up to 5MB</span>
+                    </div>
+                  </div>
+                  <input type="file" id="file-input-1" class="file-input" accept="image/*" style="display:none;">
                   <div class="gallery-card-body">
-                    <label for="gal-url-1" class="dash-label">Library / Lab</label>
-                    <input type="url" id="gal-url-1" class="dash-input gallery-input" data-index="1" placeholder="Image URL">
+                    <label class="dash-label">Category</label>
+                    <select id="gal-category-1" class="dash-select gallery-category-select" style="font-size:0.8rem; padding:6px 10px;">
+                      <option value="Classrooms">Classrooms</option>
+                      <option value="Campus Overview">Campus Overview</option>
+                      <option value="Laboratories">Laboratories</option>
+                      <option value="Sports Facilities">Sports Facilities</option>
+                      <option value="Infrastructure">Infrastructure</option>
+                      <option value="Events & Culture">Events &amp; Culture</option>
+                    </select>
+                    <button type="button" class="btn-delete-gallery-img" id="btn-del-1" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
+                    <!-- Hidden field to hold Image URL value -->
+                    <input type="hidden" id="gal-url-1" class="gallery-url-holder">
                   </div>
                 </div>
+
                 <!-- Image Card 3 -->
-                <div class="gallery-card">
-                  <div class="gallery-image-box" id="gal-prev-2">📸</div>
+                <div class="gallery-card" data-index="2">
+                  <div class="gallery-image-box" id="gal-prev-2">
+                    <div class="upload-dropzone" id="dropzone-2">
+                      <span class="dropzone-icon">📸</span>
+                      <span class="dropzone-text">Upload Laboratories</span>
+                      <span class="dropzone-help">PNG/JPG up to 5MB</span>
+                    </div>
+                  </div>
+                  <input type="file" id="file-input-2" class="file-input" accept="image/*" style="display:none;">
                   <div class="gallery-card-body">
-                    <label for="gal-url-2" class="dash-label">Sports / Grounds</label>
-                    <input type="url" id="gal-url-2" class="dash-input gallery-input" data-index="2" placeholder="Image URL">
+                    <label class="dash-label">Category</label>
+                    <select id="gal-category-2" class="dash-select gallery-category-select" style="font-size:0.8rem; padding:6px 10px;">
+                      <option value="Laboratories">Laboratories</option>
+                      <option value="Campus Overview">Campus Overview</option>
+                      <option value="Classrooms">Classrooms</option>
+                      <option value="Sports Facilities">Sports Facilities</option>
+                      <option value="Infrastructure">Infrastructure</option>
+                      <option value="Events & Culture">Events &amp; Culture</option>
+                    </select>
+                    <button type="button" class="btn-delete-gallery-img" id="btn-del-2" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
+                    <!-- Hidden field to hold Image URL value -->
+                    <input type="hidden" id="gal-url-2" class="gallery-url-holder">
                   </div>
                 </div>
+
                 <!-- Image Card 4 -->
-                <div class="gallery-card">
-                  <div class="gallery-image-box" id="gal-prev-3">📸</div>
+                <div class="gallery-card" data-index="3">
+                  <div class="gallery-image-box" id="gal-prev-3">
+                    <div class="upload-dropzone" id="dropzone-3">
+                      <span class="dropzone-icon">📸</span>
+                      <span class="dropzone-text">Upload Sports / Culture</span>
+                      <span class="dropzone-help">PNG/JPG up to 5MB</span>
+                    </div>
+                  </div>
+                  <input type="file" id="file-input-3" class="file-input" accept="image/*" style="display:none;">
                   <div class="gallery-card-body">
-                    <label for="gal-url-3" class="dash-label">Auditorium / Dining</label>
-                    <input type="url" id="gal-url-3" class="dash-input gallery-input" data-index="3" placeholder="Image URL">
+                    <label class="dash-label">Category</label>
+                    <select id="gal-category-3" class="dash-select gallery-category-select" style="font-size:0.8rem; padding:6px 10px;">
+                      <option value="Sports Facilities">Sports Facilities</option>
+                      <option value="Campus Overview">Campus Overview</option>
+                      <option value="Classrooms">Classrooms</option>
+                      <option value="Laboratories">Laboratories</option>
+                      <option value="Infrastructure">Infrastructure</option>
+                      <option value="Events & Culture">Events &amp; Culture</option>
+                    </select>
+                    <button type="button" class="btn-delete-gallery-img" id="btn-del-3" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
+                    <!-- Hidden field to hold Image URL value -->
+                    <input type="hidden" id="gal-url-3" class="gallery-url-holder">
                   </div>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 -- ═══════════════════════════════════════════════════════════
 --  Scholr — Level 6: School Management Portal Migration
+--  Contains: Foundations + Profile Management Extensions
 --  Run in: Supabase Dashboard > SQL Editor > New Query
 -- ═══════════════════════════════════════════════════════════
 
@@ -16,13 +17,18 @@ CREATE TABLE IF NOT EXISTS public.school_admins (
 COMMENT ON TABLE public.school_admins IS
   'Scholr — administrators mapped to their respective claimed school listings.';
 
--- 2. Extend public.schools to support images (logo and gallery)
-ALTER TABLE public.schools
-  ADD COLUMN IF NOT EXISTS logo_url     TEXT,
-  ADD COLUMN IF NOT EXISTS gallery_urls TEXT[];
 
-COMMENT ON COLUMN public.schools.logo_url     IS 'Official school brand logo URL';
-COMMENT ON COLUMN public.schools.gallery_urls IS 'Array of URLs representing school campus images';
+-- 2. Extend public.schools to support images and additional facilities
+ALTER TABLE public.schools
+  ADD COLUMN IF NOT EXISTS logo_url      TEXT,
+  ADD COLUMN IF NOT EXISTS gallery_urls  TEXT[],
+  ADD COLUMN IF NOT EXISTS has_transport  BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS has_hostel     BOOLEAN DEFAULT FALSE;
+
+COMMENT ON COLUMN public.schools.logo_url      IS 'Official school brand logo URL';
+COMMENT ON COLUMN public.schools.gallery_urls  IS 'Array of URLs representing school campus images';
+COMMENT ON COLUMN public.schools.has_transport IS 'Flag indicating school transport availability';
+COMMENT ON COLUMN public.schools.has_hostel    IS 'Flag indicating on-campus boarding/hostel availability';
 
 
 -- 3. Automatic Trigger: Link newly created Supabase Auth users to approved claims
@@ -184,3 +190,68 @@ BEGIN
   RETURN FALSE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- 7. Supabase Storage Bucket Initialization & Policies
+-- Create 'school-media' bucket if it doesn't already exist
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('school-media', 'school-media', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Policy A: Allow anyone (anon + authenticated) public read access to media files
+DROP POLICY IF EXISTS "Allow public read access on school-media" ON storage.objects;
+CREATE POLICY "Allow public read access on school-media"
+  ON storage.objects FOR SELECT
+  TO public
+  USING (bucket_id = 'school-media');
+
+-- Policy B: Allow authenticated school administrators to upload objects inside their folder
+DROP POLICY IF EXISTS "Allow school admins to upload media" ON storage.objects;
+CREATE POLICY "Allow school admins to upload media"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    bucket_id = 'school-media' 
+    AND (
+      EXISTS (
+        SELECT 1 FROM public.school_admins
+        WHERE school_admins.id = auth.uid()
+          AND school_admins.approved = TRUE
+      )
+    )
+  );
+
+-- Policy C: Allow authenticated school administrators to update objects in school-media
+DROP POLICY IF EXISTS "Allow school admins to update media" ON storage.objects;
+CREATE POLICY "Allow school admins to update media"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (
+    bucket_id = 'school-media'
+    AND (
+      EXISTS (
+        SELECT 1 FROM public.school_admins
+        WHERE school_admins.id = auth.uid()
+          AND school_admins.approved = TRUE
+      )
+    )
+  )
+  WITH CHECK (
+    bucket_id = 'school-media'
+  );
+
+-- Policy D: Allow authenticated school administrators to delete objects inside their folder
+DROP POLICY IF EXISTS "Allow school admins to delete media" ON storage.objects;
+CREATE POLICY "Allow school admins to delete media"
+  ON storage.objects FOR DELETE
+  TO authenticated
+  USING (
+    bucket_id = 'school-media'
+    AND (
+      EXISTS (
+        SELECT 1 FROM public.school_admins
+        WHERE school_admins.id = auth.uid()
+          AND school_admins.approved = TRUE
+      )
+    )
+  );
