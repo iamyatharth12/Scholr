@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Portal — Scholr</title>
+  <meta name="description" content="Manage your school listing, gallery, and admissions on Scholr. Built for verified school administrators." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       NAVBAR
+  ═══════════════════════════════════════════ -->
+  <header class="navbar" id="navbar">
+    <div class="container navbar__inner">
+      <a href="index.html" class="navbar__logo">Scholr</a>
+      <nav class="navbar__links" id="nav-links">
+        <a href="index.html#listings" class="nav-link">Explore</a>
+        <a href="saved.html" class="nav-link">Saved Schools</a>
+        <a href="school-dashboard.html" class="nav-link nav-link--active" style="color: var(--clr-blue-600); font-weight: 600; border-bottom: 2px solid var(--clr-blue-600);">School Portal</a>
+        <a href="index.html#about" class="nav-link">About</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Toast Notifications Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Main View Router -->
+  <main id="portal-view">
+    
+    <!-- ───────────────────────────────────────────
+         1. AUTH VIEW (Shown when unauthenticated)
+         ─────────────────────────────────────────── -->
+    <div class="auth-wrapper" id="view-auth" style="display: none;">
+      <!-- Left Column Branding Pane -->
+      <div class="auth-brand-pane">
+        <div class="auth-brand-glow"></div>
+        <div class="auth-brand-logo">Scholr <span style="font-weight: 400; font-size: 1.2rem; color: var(--clr-blue-400);">portal</span></div>
+        <h2 class="auth-brand-title">Put your school in front of thousands of parents.</h2>
+        <p class="auth-brand-desc">Claim your profile to update fees, add stunning campus images, manage live admissions, and build verified trust with families in your city.</p>
+        
+        <div class="auth-features-list">
+          <div class="auth-feature-item">
+            <svg class="auth-feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <div>
+              <span class="auth-feature-bold">Fresh Profile Metrics</span>
+              <span class="auth-feature-text">Keep your board, fees, location and details perfectly up to date.</span>
+            </div>
+          </div>
+          <div class="auth-feature-item">
+            <svg class="auth-feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <div>
+              <span class="auth-feature-bold">Stunning Logo &amp; Image Galleries</span>
+              <span class="auth-feature-text">Make a gorgeous first impression on parents browsing listings.</span>
+            </div>
+          </div>
+          <div class="auth-feature-item">
+            <svg class="auth-feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <div>
+              <span class="auth-feature-bold">Live Admissions Timeline</span>
+              <span class="auth-feature-text">Update application open/close cycles, deadlines, and steps dynamically.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column Form Pane -->
+      <div class="auth-form-pane">
+        <div class="auth-form-card">
+          <!-- Auth Section Tabs -->
+          <div class="auth-tabs">
+            <button class="auth-tab-btn active" id="tab-login-btn">Sign In</button>
+            <button class="auth-tab-btn" id="tab-register-btn">Claim &amp; Register</button>
+          </div>
+
+          <!-- A. LOGIN FORM -->
+          <form id="form-login" novalidate>
+            <h3 class="auth-card-title">Welcome back</h3>
+            <p class="auth-card-subtitle">Log in with your administrator account.</p>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="login-email" class="dash-label">Official Email</label>
+              <input type="email" id="login-email" class="dash-input" required placeholder="admin@yourschool.edu">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 24px;">
+              <label for="login-password" class="dash-label">Password</label>
+              <input type="password" id="login-password" class="dash-input" required placeholder="••••••••">
+            </div>
+            
+            <button type="submit" class="btn btn--primary" style="width: 100%; height: 46px; font-weight: 600;" id="login-submit">
+              Sign In to Portal
+            </button>
+          </form>
+
+          <!-- B. REGISTER FORM -->
+          <form id="form-register" style="display: none;" novalidate>
+            <h3 class="auth-card-title">Activate School Portal</h3>
+            <p class="auth-card-subtitle">Claim your listing and create your portal account.</p>
+            
+            <!-- School Selection Select Dropdown -->
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="register-school-select" class="dash-label">Select Your School Listing *</label>
+              <select id="register-school-select" class="dash-select" required>
+                <option value="">— Loading listings… —</option>
+              </select>
+              <span class="dash-input-help">Select your existing school. Not listed? Enter details below.</span>
+            </div>
+
+            <!-- Freeform School Name input if not listed -->
+            <div class="form-group" id="group-manual-school" style="margin-bottom: 16px; display: none;">
+              <label for="register-school-name" class="dash-label">School Name *</label>
+              <input type="text" id="register-school-name" class="dash-input" placeholder="e.g. Greenwood Academy">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="register-email" class="dash-label">Official Email Address *</label>
+              <input type="email" id="register-email" class="dash-input" required placeholder="admin@yourschool.edu">
+              <span class="dash-input-help">Domain-specific email matching the school preferred.</span>
+            </div>
+
+            <div class="form-grid" style="margin-bottom: 16px; gap: 16px;">
+              <div class="form-group">
+                <label for="register-phone" class="dash-label">Direct Contact No. *</label>
+                <input type="tel" id="register-phone" class="dash-input" required placeholder="+91 ...">
+              </div>
+              <div class="form-group">
+                <label for="register-designation" class="dash-label">Your Designation *</label>
+                <input type="text" id="register-designation" class="dash-input" required placeholder="e.g. Principal">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+              <label for="register-password" class="dash-label">Create Password *</label>
+              <input type="password" id="register-password" class="dash-input" required placeholder="Min 6 characters">
+            </div>
+
+            <button type="submit" class="btn btn--primary" style="width: 100%; height: 46px; font-weight: 600;" id="register-submit">
+              Register &amp; Claim Listing
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────
+         2. PENDING ACTIVATION VIEW (Unapproved claims)
+         ─────────────────────────────────────────── -->
+    <div class="pending-wrapper" id="view-pending" style="display: none;">
+      <div class="pending-card">
+        <!-- Developer Sandbox Test Alert at the top -->
+        <div class="sandbox-card">
+          <span class="sandbox-badge">🔬 Developer Sandbox Bypass</span>
+          <p class="sandbox-desc">In standard production environments, our team verifies school claims within 24-48 hours. For local evaluation, click below to instantly approve your claim!</p>
+          <button class="btn-sandbox" id="btn-sandbox-approve">
+            ⚡ Approve My Claim Instantly (Demo)
+          </button>
+        </div>
+
+        <div class="pending-pulse-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h2 class="pending-title">Verification in Progress</h2>
+        <p class="pending-sub">Your claim has been submitted. Our moderation team is validating your domain ownership and official designation. You'll receive full access upon approval.</p>
+        
+        <div class="pending-details-box">
+          <div class="pending-detail-row">
+            <span class="pending-detail-label">School Claimed:</span>
+            <span class="pending-detail-val" id="pending-school-name">School Name</span>
+          </div>
+          <div class="pending-detail-row">
+            <span class="pending-detail-label">Admin Email:</span>
+            <span class="pending-detail-val" id="pending-email">email@domain.com</span>
+          </div>
+          <div class="pending-detail-row">
+            <span class="pending-detail-label">Designation:</span>
+            <span class="pending-detail-val" id="pending-designation">Principal</span>
+          </div>
+          <div class="pending-detail-row">
+            <span class="pending-detail-label">Verification Status:</span>
+            <span class="pending-detail-val" style="color: var(--clr-dash-warning); font-weight: 700;">⌛ Pending Moderation</span>
+          </div>
+        </div>
+
+        <button class="btn btn--outline" id="pending-logout-btn" style="width: 100%;">
+          Sign Out of Account
+        </button>
+      </div>
+    </div>
+
+    <!-- ───────────────────────────────────────────
+         3. APPROVED DASHBOARD WORKSPACE VIEW
+         ─────────────────────────────────────────── -->
+    <div class="dash-container" id="view-dashboard" style="display: none;">
+      <!-- Sidebar Panel -->
+      <aside class="dash-sidebar">
+        <div>
+          <!-- Active School Summary Header -->
+          <div class="dash-school-info">
+            <div class="dash-school-avatar" id="sidebar-school-avatar">🏫</div>
+            <div class="dash-school-meta">
+              <h4 class="dash-school-name" id="sidebar-school-name">Greenwood High</h4>
+              <span class="dash-school-role">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--clr-dash-success)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Approved Admin
+              </span>
+            </div>
+          </div>
+
+          <!-- Navigation Links -->
+          <nav class="dash-nav">
+            <button class="dash-nav-btn active" data-tab="tab-profile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M12 11h.01"/><path d="M12 7h.01"/><path d="M12 15h.01"/><path d="M8 11h.01"/><path d="M8 7h.01"/><path d="M8 15h.01"/><path d="M16 11h.01"/><path d="M16 7h.01"/><path d="M16 15h.01"/></svg>
+              School Profile
+            </button>
+            <button class="dash-nav-btn" data-tab="tab-gallery">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              Campus Gallery
+            </button>
+            <button class="dash-nav-btn" data-tab="tab-admissions">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Admissions Info
+            </button>
+            <button class="dash-nav-btn" data-tab="tab-verification">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Trust &amp; Verification
+            </button>
+          </nav>
+        </div>
+
+        <!-- Sidebar Footer Action -->
+        <div class="dash-sidebar-footer">
+          <button class="btn-signout" id="dash-logout-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Sign Out Portal
+          </button>
+        </div>
+      </aside>
+
+      <!-- Workspace Body Section -->
+      <section class="dash-content">
+        <form id="form-dashboard" novalidate>
+          
+          <!-- A. TAB: PROFILE SECTION -->
+          <div class="dash-tab-view" id="tab-profile">
+            <div class="dash-header">
+              <span class="dash-pretitle">Foundational Listing</span>
+              <h2 class="dash-title">General School Profile</h2>
+              <p class="dash-subtitle">Update your official metadata, board associations, and description displayed on search lists.</p>
+            </div>
+
+            <!-- Card: Details -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Listing Details</h3>
+                <p class="dash-card-subtitle">Base information and school identifiers.</p>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="prof-name" class="dash-label">School Listing Name *</label>
+                  <input type="text" id="prof-name" class="dash-input" required>
+                </div>
+                <div class="form-grid" style="gap: 16px; margin: 0; padding: 0;">
+                  <div class="form-group">
+                    <label for="prof-board" class="dash-label">Board *</label>
+                    <select id="prof-board" class="dash-select" required>
+                      <option value="CBSE">CBSE</option>
+                      <option value="ICSE">ICSE</option>
+                      <option value="State">State Board</option>
+                      <option value="IB">IB</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="prof-fees" class="dash-label">Fees Scale *</label>
+                    <input type="text" id="prof-fees" class="dash-input" required placeholder="₹40k–₹70k/yr">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="prof-location" class="dash-label">Area / Location *</label>
+                  <input type="text" id="prof-location" class="dash-input" required placeholder="e.g. Maligaon">
+                </div>
+                <div class="form-group">
+                  <label for="prof-city" class="dash-label">City *</label>
+                  <input type="text" id="prof-city" class="dash-input" required readonly>
+                </div>
+
+                <div class="form-group form-group-full">
+                  <label for="prof-desc" class="dash-label">About / General Description</label>
+                  <textarea id="prof-desc" class="dash-textarea" rows="4" placeholder="Brief summary of your school's vision, philosophy, and history..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card: Facilities -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">School Facilities &amp; Amenities</h3>
+                <p class="dash-card-subtitle">List down facilities available on campus. Separate items by pressing Enter or Comma.</p>
+              </div>
+              
+              <div class="form-group">
+                <label class="dash-label">Current Offerings</label>
+                <div class="chips-input-container" id="facilities-chips-container">
+                  <!-- Chips inserted dynamically by JS -->
+                  <input type="text" class="chip-input-field" id="facilities-chip-input" placeholder="Type and press Enter...">
+                </div>
+                <span class="dash-input-help">Common listings: Smart Classrooms, Library, Science Labs, Swimming Pool, Transport, Sports Ground.</span>
+              </div>
+            </div>
+
+            <!-- Card: Contact Details -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Official Contact details</h3>
+                <p class="dash-card-subtitle">Primary channels for parental inquiries.</p>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="prof-website" class="dash-label">School Website URL</label>
+                  <input type="url" id="prof-website" class="dash-input" placeholder="https://www.school.edu">
+                </div>
+                <div class="form-group">
+                  <label for="prof-email" class="dash-label">Inquiry Email</label>
+                  <input type="email" id="prof-email" class="dash-input" placeholder="admissions@school.edu">
+                </div>
+                <div class="form-group">
+                  <label for="prof-phone" class="dash-label">Telephone / Phone</label>
+                  <input type="text" id="prof-phone" class="dash-input" placeholder="+91 ...">
+                </div>
+                <div class="form-group">
+                  <label for="prof-maps" class="dash-label">Google Maps Location Link</label>
+                  <input type="url" id="prof-maps" class="dash-input" placeholder="https://maps.google.com/...">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- B. TAB: GALLERY SECTION -->
+          <div class="dash-tab-view" id="tab-gallery" style="display: none;">
+            <div class="dash-header">
+              <span class="dash-pretitle">Visual Assets</span>
+              <h2 class="dash-title">Campus Gallery &amp; Logo</h2>
+              <p class="dash-subtitle">Upload or link images showing campus environments, classrooms, libraries, or events.</p>
+            </div>
+
+            <!-- Logo Card -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Brand Identity</h3>
+                <p class="dash-card-subtitle">Your school logo displays alongside listings and the main profile page.</p>
+              </div>
+
+              <div class="logo-upload-wrap">
+                <div class="logo-preview-box" id="logo-preview">🏫</div>
+                <div style="flex-grow: 1;">
+                  <label for="gal-logo" class="dash-label">Logo Image URL</label>
+                  <input type="url" id="gal-logo" class="dash-input" placeholder="https://domain.com/path-to-logo.png">
+                  <span class="dash-input-help">Supports standard web formats (PNG, JPG, SVG).</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gallery Images Grid Card -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Campus Images Showcase</h3>
+                <p class="dash-card-subtitle">Provide up to 4 high-resolution links displaying campus facilities and student life.</p>
+              </div>
+
+              <div class="gallery-grid">
+                <!-- Image Card 1 -->
+                <div class="gallery-card">
+                  <div class="gallery-image-box" id="gal-prev-0">📸</div>
+                  <div class="gallery-card-body">
+                    <label for="gal-url-0" class="dash-label">Classrooms / General</label>
+                    <input type="url" id="gal-url-0" class="dash-input gallery-input" data-index="0" placeholder="Image URL">
+                  </div>
+                </div>
+                <!-- Image Card 2 -->
+                <div class="gallery-card">
+                  <div class="gallery-image-box" id="gal-prev-1">📸</div>
+                  <div class="gallery-card-body">
+                    <label for="gal-url-1" class="dash-label">Library / Lab</label>
+                    <input type="url" id="gal-url-1" class="dash-input gallery-input" data-index="1" placeholder="Image URL">
+                  </div>
+                </div>
+                <!-- Image Card 3 -->
+                <div class="gallery-card">
+                  <div class="gallery-image-box" id="gal-prev-2">📸</div>
+                  <div class="gallery-card-body">
+                    <label for="gal-url-2" class="dash-label">Sports / Grounds</label>
+                    <input type="url" id="gal-url-2" class="dash-input gallery-input" data-index="2" placeholder="Image URL">
+                  </div>
+                </div>
+                <!-- Image Card 4 -->
+                <div class="gallery-card">
+                  <div class="gallery-image-box" id="gal-prev-3">📸</div>
+                  <div class="gallery-card-body">
+                    <label for="gal-url-3" class="dash-label">Auditorium / Dining</label>
+                    <input type="url" id="gal-url-3" class="dash-input gallery-input" data-index="3" placeholder="Image URL">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- C. TAB: ADMISSIONS SECTION -->
+          <div class="dash-tab-view" id="tab-admissions" style="display: none;">
+            <div class="dash-header">
+              <span class="dash-pretitle">Cycle Management</span>
+              <h2 class="dash-title">Admission Details &amp; Deadlines</h2>
+              <p class="dash-subtitle">Share real-time status and milestones of your upcoming admission cycles with prospective parents.</p>
+            </div>
+
+            <!-- Admissions Status Card -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Admission Status</h3>
+                <p class="dash-card-subtitle">Direct toggle indicating if applications are currently being accepted.</p>
+              </div>
+
+              <div class="toggle-container">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="adm-open">
+                  <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label-text" id="adm-status-label">Admissions Closed</span>
+              </div>
+            </div>
+
+            <!-- Milestones Card -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Key Cycle Dates</h3>
+                <p class="dash-card-subtitle">Provide exact key dates for admissions processing. Empty dates will render as 'To Be Announced' (TBA).</p>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="adm-start" class="dash-label">Applications Open Date</label>
+                  <input type="date" id="adm-start" class="dash-input">
+                </div>
+                <div class="form-group">
+                  <label for="adm-deadline" class="dash-label">Application Deadline</label>
+                  <input type="date" id="adm-deadline" class="dash-input">
+                </div>
+                <div class="form-group">
+                  <label for="adm-interview" class="dash-label">Interviews / Interaction Start</label>
+                  <input type="date" id="adm-interview" class="dash-input">
+                </div>
+                <div class="form-group">
+                  <label for="adm-result" class="dash-label">Results Declaration Date</label>
+                  <input type="date" id="adm-result" class="dash-input">
+                </div>
+                <div class="form-group">
+                  <label for="adm-session" class="dash-label">New Academic Session Starts</label>
+                  <input type="date" id="adm-session" class="dash-input">
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Notes -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Cycle Guidelines &amp; Notes</h3>
+                <p class="dash-card-subtitle">Additional details, documents required, eligibility criteria, or instructions for parents.</p>
+              </div>
+
+              <div class="form-group">
+                <label for="adm-notes" class="dash-label">Instructions / Guidelines</label>
+                <textarea id="adm-notes" class="dash-textarea" rows="3" placeholder="e.g. Please bring birth certificate, passport size photographs, and previous marksheets for submission..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- D. TAB: VERIFICATION SECTION -->
+          <div class="dash-tab-view" id="tab-verification" style="display: none;">
+            <div class="dash-header">
+              <span class="dash-pretitle">Account Trust</span>
+              <h2 class="dash-title">Verification Badges &amp; History</h2>
+              <p class="dash-subtitle">Review verification badges, review logs, and the freshness transparency indicator of your portal profile.</p>
+            </div>
+
+            <!-- Status Card -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Verification Identity</h3>
+                <p class="dash-card-subtitle">Visual badges shown to parents browsing listings.</p>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--clr-dash-border);">
+                  <span class="dash-label" style="margin:0;">Verification Tier:</span>
+                  <span id="ver-badge-container">
+                    <!-- Badges render here -->
+                    <span class="status-badge status-badge--verified">Verified</span>
+                  </span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--clr-dash-border);">
+                  <span class="dash-label" style="margin:0;">Claim Verification Status:</span>
+                  <span class="status-badge status-badge--verified" style="background-color: var(--clr-dash-success-bg); color: var(--clr-dash-success); font-weight:700;">✓ Active Approved</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
+                  <span class="dash-label" style="margin:0;">Last Profile Refresh:</span>
+                  <span class="pending-detail-val" id="ver-last-updated" style="font-size:0.875rem;">Just now</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card: Auditor logs -->
+            <div class="dash-card">
+              <div class="dash-card-header">
+                <h3 class="dash-card-title">Verification Notes &amp; History</h3>
+                <p class="dash-card-subtitle">Official reviewer notes logged during audit cycles.</p>
+              </div>
+
+              <div style="background: var(--clr-dash-bg); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--clr-dash-border);">
+                <p class="dash-label" style="margin-bottom: 8px;">Moderator Assessment Notes:</p>
+                <p id="ver-reviewer-notes" style="font-size:0.875rem; color: var(--clr-dash-text-sec); line-height: 1.5; margin:0; font-style: italic;">
+                  No review comments logged yet.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Fixed Action bar for saving edits -->
+          <div class="dash-actions-bar">
+            <span id="save-status-msg" style="margin-right:auto; align-self:center; font-size:0.85rem; font-weight:600; transition:var(--transition-fast);"></span>
+            <button type="submit" class="btn-dash-save" id="btn-save-changes">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+              </svg>
+              Save Dashboard Edits
+            </button>
+          </div>
+
+        </form>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════ -->
+  <footer class="footer" id="footer">
+    <div class="container footer__inner">
+      <span class="footer__brand">Scholr</span>
+      <p class="footer__copy">&copy; 2026 Scholr. All rights reserved.</p>
+      <nav class="footer__links">
+        <a href="index.html" class="footer-link">Explore Listings</a>
+        <a href="saved.html" class="footer-link">Saved Shortlist</a>
+        <a href="index.html#about" class="footer-link">About Scholr</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- Supabase JS client (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Plausible Analytics -->
+  <script defer data-domain="scholr-eight.vercel.app" src="https://plausible.io/js/script.js"></script>
+  <!-- Scholr Analytics -->
+  <script src="js/analytics.js"></script>
+  <!-- Scholr Trust badge utilities -->
+  <script src="js/trust.js"></script>
+  <!-- Scholr Admissions timeline parser -->
+  <script src="js/admissions.js"></script>
+  <!-- Scholr Supabase Instance Client -->
+  <script src="supabase.js"></script>
+  <!-- Main Dashboard Script controller -->
+  <script src="school-dashboard.js"></script>
+
+  <!-- Hamburger Nav control -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const hamburger = document.getElementById('hamburger');
+      const navLinks  = document.getElementById('nav-links');
+      const navbar    = document.getElementById('navbar');
+      
+      window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 8);
+      }, { passive: true });
+      
+      hamburger.addEventListener('click', () => {
+        const open = hamburger.classList.toggle('open');
+        navLinks.classList.toggle('open', open);
+        hamburger.setAttribute('aria-expanded', String(open));
+      });
+    });
+  </script>
+</body>
+</html>

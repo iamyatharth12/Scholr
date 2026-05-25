@@ -489,6 +489,7 @@ window.Scholr = {
   toggleSave,
   isSaved,
   /* expose helpers for compare.js re-use */
+  boardClass,
   inferFeeCategory,
   feeCategoryClass,
   buildBestForHTML,

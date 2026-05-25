@@ -2496,3 +2496,625 @@ body {
     font-size: 1.1rem;
   }
 }
+
+/* ═══════════════════════════════════════════
+   LEVEL 5: SAVED SCHOOLS DASHBOARD
+═══════════════════════════════════════════ */
+
+.dashboard-main {
+  background-color: #f8fafc;
+  padding: 32px 0 100px;
+  min-height: 80vh;
+}
+
+.dashboard__header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.dashboard-count-chip {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 100px;
+  color: var(--clr-text-secondary);
+}
+
+.dashboard-loading {
+  text-align: center;
+  padding: 64px 0;
+  color: var(--clr-text-secondary);
+}
+
+.dashboard-loading .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--clr-border);
+  border-top-color: var(--clr-blue-600);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.dashboard-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(430px, 1fr));
+  gap: 28px;
+}
+
+@media (max-width: 640px) {
+  .dashboard-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* Dashboard Card */
+.dashboard-card {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  border-color: var(--clr-blue-100);
+}
+
+/* Header & Quick Actions */
+.dashboard-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: -4px;
+}
+
+.dashboard-card__compare-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.dashboard-card__compare-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.dashboard-card__compare-checkbox .cb-custom {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--clr-border);
+  border-radius: 4px;
+  display: inline-block;
+  position: relative;
+  transition: all 0.2s;
+  background: var(--clr-surface);
+}
+
+.dashboard-card__compare-checkbox input[type="checkbox"]:checked + .cb-custom {
+  background: var(--clr-blue-600);
+  border-color: var(--clr-blue-600);
+}
+
+.dashboard-card__compare-checkbox input[type="checkbox"]:checked + .cb-custom::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.dashboard-card__compare-checkbox input[type="checkbox"]:disabled + .cb-custom {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+.dashboard-card__compare-checkbox .cb-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--clr-text-secondary);
+  transition: color 0.2s;
+}
+
+.dashboard-card__compare-checkbox:hover .cb-label {
+  color: var(--clr-blue-600);
+}
+
+.dashboard-card__remove-btn {
+  background: none;
+  border: none;
+  color: var(--clr-text-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.dashboard-card__remove-btn:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  transform: scale(1.05);
+}
+
+/* Card Main Info */
+.dashboard-card__main-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-card__title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-card__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.dashboard-card__name a {
+  text-decoration: none;
+  color: var(--clr-text-primary);
+  transition: color 0.2s;
+}
+
+.dashboard-card__name a:hover {
+  color: var(--clr-blue-600);
+}
+
+.dashboard-card__location {
+  font-size: 0.85rem;
+  color: var(--clr-text-secondary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dashboard-card__location svg {
+  color: var(--clr-text-muted);
+}
+
+.dashboard-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.dashboard-card__fees {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--clr-text-primary);
+}
+
+.dashboard-card__rating {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #92400e;
+  background: #fffbeb;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.dashboard-card__trust {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+/* Admission Deadline Displays */
+.dashboard-card__admissions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-card__admissions .admission-status-chip {
+  align-self: flex-start;
+  margin: 0;
+}
+
+.dashboard-card__deadline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  align-self: flex-start;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.dashboard-card__deadline:hover {
+  opacity: 0.85;
+}
+
+.deadline--info {
+  background: #eff6ff;
+  color: #1e40af;
+  border-left: 3px solid var(--clr-blue-500);
+}
+
+.deadline--danger {
+  background: #fef2f2;
+  color: #991b1b;
+  border-left: 3px solid #ef4444;
+}
+
+.deadline--warning {
+  background: #fffbeb;
+  color: #92400e;
+  border-left: 3px solid #f59e0b;
+}
+
+.deadline--muted {
+  background: #f9fafb;
+  color: #4b5563;
+  border-left: 3px solid #9ca3af;
+}
+
+.dashboard-card__divider {
+  border: none;
+  border-top: 1px solid var(--clr-border);
+  margin: 2px 0;
+}
+
+/* Decision Workspace controls */
+.dashboard-card__workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.workspace__status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.workspace__label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--clr-text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.workspace__status-dropdown-container {
+  position: relative;
+}
+
+.workspace__status-select {
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.status-select--exploring {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.status-select--preferred {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+.status-select--backup {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.status-select--rejected {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+/* Notes Textarea Workspace */
+.workspace__notes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.notes__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notes__title-icon {
+  margin-right: 4px;
+}
+
+.notes__autosave-status {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #16a34a;
+  transition: opacity 0.2s;
+}
+
+.notes__autosave-status.saving {
+  color: var(--clr-text-secondary);
+  animation: savePulse 1.2s infinite alternate;
+}
+
+@keyframes savePulse {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+
+.workspace__notes-textarea {
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  resize: vertical;
+  min-height: 80px;
+  max-height: 250px;
+  outline: none;
+  font-family: inherit;
+  color: var(--clr-text-primary);
+  background-color: var(--clr-bg);
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.workspace__notes-textarea:focus {
+  border-color: var(--clr-blue-500);
+  background-color: var(--clr-surface);
+}
+
+/* Floating Compare Bar Workspace Banner */
+.dash-compare-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 12px 28px;
+  border-radius: 100px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  width: 90%;
+  max-width: 620px;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3), 0 8px 15px -6px rgba(0, 0, 0, 0.3);
+  display: none;
+}
+
+.dash-compare-bar__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.dash-compare-bar__info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+}
+
+.dash-compare-bar__icon {
+  font-size: 1.15rem;
+}
+
+.dash-compare-bar__count {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.dash-compare-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dash-compare-bar__actions .btn {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  min-height: auto;
+}
+
+.slide-up {
+  animation: slideUpIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpIn {
+  from {
+    transform: translate(-50%, 80px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+/* Smart Onboarding Cards */
+.onboarding-card {
+  max-width: 520px;
+  margin: 64px auto;
+  text-align: center;
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  padding: 48px 32px;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.onboarding-card__hero {
+  font-size: 3.5rem;
+  margin-bottom: 20px;
+  background: #f8fafc;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--clr-border);
+}
+
+.onboarding-card__title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+
+.onboarding-card__desc {
+  color: var(--clr-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0 0 28px;
+}
+
+.onboarding-card__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.onboarding-card__actions .btn {
+  font-size: 0.85rem;
+  padding: 10px 20px;
+}
+
+/* Smart Discovery recommendations grid */
+.dashboard-recommendations {
+  background-color: #f1f5f9;
+  border-top: 1px solid var(--clr-border);
+  padding: 56px 0;
+}
+
+.recommendations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.rec-card {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rec-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--clr-blue-100);
+  box-shadow: var(--shadow-sm);
+}
+
+.rec-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rec-card__reason-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #16a34a;
+  background-color: #dcfce7;
+  padding: 3px 8px;
+  border-radius: 100px;
+  letter-spacing: 0.05em;
+}
+
+.rec-card__name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--clr-text-primary);
+}
+
+.rec-card__meta {
+  font-size: 0.8rem;
+  color: var(--clr-text-secondary);
+  margin: 0;
+}
+
+.rec-card__explanation {
+  font-size: 0.78rem;
+  color: var(--clr-text-secondary);
+  font-style: italic;
+  margin: 0;
+}
+
+.rec-card .btn {
+  margin-top: auto;
+  font-size: 0.8rem;
+  padding: 8px 16px;
+  width: 100%;
+  justify-content: center;
+  min-height: auto;
+}
+

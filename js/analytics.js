@@ -91,6 +91,31 @@ window.ScholrAnalytics = {
 
   trackRecommendationGroupViewed: function(groupName) {
     this.trackEvent('recommendation_group_viewed', { group_name: groupName });
+  },
+
+  // ── Level 5: Saved Schools Dashboard + Decision Workspace ──
+  trackDashboardOpened: function(savedCount) {
+    this.trackEvent('dashboard_opened', { saved_count: savedCount });
+  },
+
+  trackDecisionStatusChanged: function(schoolId, oldStatus, newStatus) {
+    this.trackEvent('decision_status_changed', { school_id: schoolId, old_status: oldStatus, new_status: newStatus });
+  },
+
+  trackNotesUpdated: function(schoolId) {
+    this.trackEvent('notes_updated', { school_id: schoolId });
+  },
+
+  trackDashboardCompareStarted: function(schoolIds) {
+    this.trackEvent('dashboard_compare_started', { school_ids: schoolIds.join(',') });
+  },
+
+  trackDeadlineClicked: function(schoolId, deadlineType) {
+    this.trackEvent('deadline_clicked', { school_id: schoolId, deadline_type: deadlineType });
+  },
+
+  trackDashboardRecommendationClicked: function(recommendedSchoolId) {
+    this.trackEvent('dashboard_recommendation_clicked', { recommended_school_id: recommendedSchoolId });
   }
 };
 

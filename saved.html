@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Saved Schools — Scholr</title>
+  <title>My Admission Dashboard — Scholr</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -19,7 +19,8 @@
       <a href="index.html" class="navbar__logo">Scholr</a>
       <nav class="navbar__links" id="nav-links">
         <a href="index.html#listings" class="nav-link">Explore</a>
-        <a href="saved.html" class="nav-link" style="color: var(--clr-blue-600); border-bottom: 2px solid var(--clr-blue-600);">Saved</a>
+        <a href="saved.html" class="nav-link nav-link--active" style="color: var(--clr-blue-600); border-bottom: 2px solid var(--clr-blue-600);">Dashboard</a>
+        <a href="school-dashboard.html" class="nav-link" style="color: var(--clr-blue-600); font-weight: 600;">School Portal</a>
         <a href="index.html#about" class="nav-link">About</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
@@ -28,45 +29,79 @@
     </div>
   </header>
 
-  <main>
+  <!-- ═══════════════════════════════════════════
+       DASHBOARD WORKSPACE
+  ═══════════════════════════════════════════ -->
+  <main class="dashboard-main">
     <section class="listings-section" id="listings">
       <div class="container">
-        <div class="listings__header">
-          <h2 class="listings__title">Saved Schools</h2>
-          <span class="listings__count" id="listings-count">0 schools found</span>
+        
+        <!-- Dashboard Header -->
+        <div class="listings__header dashboard__header-flex">
+          <div>
+            <h2 class="listings__title">My Admission Dashboard</h2>
+            <p class="listings__sub">Track applications, set decision status, and log personal thoughts for your school shortlist.</p>
+          </div>
+          <span class="listings__count dashboard-count-chip" id="listings-count">0 schools saved</span>
         </div>
 
         <!-- Loading State -->
-        <div id="loading-state" style="display: none;">Loading schools...</div>
-
-        <!-- School Cards Grid — populated dynamically by supabase.js -->
-        <div class="cards-grid" id="cards-grid" style="display: none;"></div>
-
-        <!-- Empty State (hidden by default) -->
-        <div class="empty-state" id="empty-state" hidden aria-live="polite">
-          <div class="empty-state__icon">★</div>
-          <h3 class="empty-state__title">No saved schools yet</h3>
-          <p class="empty-state__sub">Start exploring and hit <strong>Save</strong> on schools you like &mdash; they'll appear here for easy comparison.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px;">
-            <a href="index.html#listings" class="btn btn--primary">Explore Schools</a>
-            <button class="btn btn--ghost suggest-school-trigger" id="saved-suggest-btn">+ Suggest a School</button>
-          </div>
+        <div id="loading-state" class="dashboard-loading" style="display: none;">
+          <div class="spinner"></div>
+          <p>Syncing your workspace...</p>
         </div>
 
+        <!-- Saved School Cards Dashboard Grid (Populated dynamically by js/saved.js) -->
+        <div class="dashboard-cards-grid" id="cards-grid" style="display: none;"></div>
+
+        <!-- Onboarding Empty State (Populated dynamically if empty) -->
+        <div class="empty-state" id="empty-state" hidden aria-live="polite"></div>
+
+      </div>
+    </section>
+
+    <!-- Contextual Smart Discovery Recommendations Section -->
+    <section class="dashboard-recommendations" id="recommendations-container" style="display: none;">
+      <div class="container">
+        <div class="listings__header">
+          <div>
+            <h2 class="listings__title">Matches for Your Shortlist</h2>
+            <p class="listings__sub">Deterministic recommendations based on saved boards, budgets, and areas.</p>
+          </div>
+        </div>
+        <div class="recommendations-grid" id="recommendations-grid">
+          <!-- Populated dynamically by js/saved.js -->
+        </div>
       </div>
     </section>
   </main>
 
-  <!-- ═════════════════════════════════════════════
+  <!-- ═══════════════════════════════════════════
+       FLOATING COMPARE BAR WORKSPACE
+  ═══════════════════════════════════════════ -->
+  <div class="dash-compare-bar" id="dash-compare-bar" style="display: none;">
+    <div class="container dash-compare-bar__inner">
+      <div class="dash-compare-bar__info">
+        <span class="dash-compare-bar__icon">📊</span>
+        <span class="dash-compare-bar__count" id="dash-selected-count">0 selected</span>
+      </div>
+      <div class="dash-compare-bar__actions">
+        <button class="btn btn--ghost" id="dash-compare-clear-btn" onclick="selectedCompareList = []; updateDashboardCompareBar();" style="color: var(--clr-text-secondary);">Clear</button>
+        <button class="btn btn--primary" id="dash-compare-launch-btn" disabled>Launch Compare Workspace</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
        FOOTER
-  ═════════════════════════════════════════════ -->
+  ═══════════════════════════════════════════ -->
   <footer class="footer" id="footer">
     <div class="container footer__inner">
       <span class="footer__brand">Scholr</span>
       <p class="footer__copy">© 2026 Scholr. All rights reserved.</p>
       <nav class="footer__links">
         <a href="index.html" class="footer-link">Explore</a>
-        <button class="footer-link" id="footer-suggest-link" style="background:none;border:none;padding:0;font:inherit;cursor:pointer;">Suggest a School</button>
+        <button class="footer-link id-suggest-school-trigger suggest-school-trigger" style="background:none;border:none;padding:0;font:inherit;cursor:pointer;">Suggest a School</button>
       </nav>
     </div>
   </footer>
@@ -111,13 +146,16 @@
   <script src="js/analytics.js"></script>
   <!-- Scholr Trust module -->
   <script src="js/trust.js"></script>
+  <!-- Scholr Admissions module -->
+  <script src="js/admissions.js"></script>
   <!-- Scholr DB integration (also sets window.ScholrDB) -->
   <script src="supabase.js"></script>
-  <!-- Saved page init + Suggest modal wiring -->
+  <!-- Level 5 Dashboard Controller -->
+  <script src="js/saved.js"></script>
+
+  <!-- Suggest modal wiring -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      window.Scholr.loadSavedSchools();
-
       // Navbar scroll + hamburger
       const navbar    = document.getElementById('navbar');
       const hamburger = document.getElementById('hamburger');
@@ -147,9 +185,8 @@
       document.getElementById('suggest-school-close').addEventListener('click', closeModal);
       document.getElementById('suggest-school-done').addEventListener('click', closeModal);
       modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-      document.getElementById('footer-suggest-link').addEventListener('click', openModal);
 
-      // Delegate triggers from empty state, etc.
+      // Delegate triggers from empty state, footer, etc.
       document.body.addEventListener('click', e => {
         if (e.target.closest('.suggest-school-trigger')) { e.preventDefault(); openModal(); }
       });
@@ -188,4 +225,3 @@
   </script>
 </body>
 </html>
-

@@ -301,7 +301,9 @@ function renderSchool(school, allSchools = []) {
 
       <!-- ── HERO / HEADER ─────────────────────── -->
       <div class="detail__hero">
-        <div class="detail__avatar">🏫</div>
+        <div class="detail__avatar" style="overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--clr-blue-50);">
+          ${school.logo_url ? `<img src="${school.logo_url}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;" alt="${safe(school.name)} Logo">` : '🏫'}
+        </div>
         <div class="detail__title-wrap">
           <div class="detail__title-row">
             <h1 class="detail__name">${safe(school.name)}</h1>
@@ -378,6 +380,21 @@ function renderSchool(school, allSchools = []) {
       </div>
 
       <hr class="detail__divider">
+
+      <!-- ── CAMPUS GALLERY ──────────────────────── -->
+      ${school.gallery_urls && school.gallery_urls.length > 0 ? `
+      <div class="detail__section detail__gallery">
+        <h2 class="section-heading">Campus Gallery</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 16px;">
+          ${school.gallery_urls.map(url => `
+            <div class="gallery-item-wrap" style="border-radius: 8px; overflow: hidden; height: 160px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--clr-border, #e2e8f0);">
+              <img src="${url}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'" alt="Campus View">
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <hr class="detail__divider">
+      ` : ''}
 
       <!-- ── FACILITIES ─────────────────────────── -->
       <div class="detail__section detail__facilities">
