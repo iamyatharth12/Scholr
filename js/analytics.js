@@ -150,6 +150,17 @@ window.ScholrAnalytics = {
   },
   trackNotesUpdated: function(schoolId) {
     this.trackEvent('notes_updated', { school_id: schoolId });
+  },
+  
+  // ── Contact Us Telemetry ─────────────────────────────────
+  trackContactOpened: function() {
+    this.trackEvent('contact_opened');
+  },
+  trackContactSubmitted: function(category) {
+    this.trackEvent('contact_submitted', { category: category });
+  },
+  trackContactFailed: function(reason) {
+    this.trackEvent('contact_failed', { reason: reason });
   }
 };
 
