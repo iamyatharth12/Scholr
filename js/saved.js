@@ -552,7 +552,7 @@ function renderSmartOnboarding(container) {
         Save schools to start managing your admission journey. Track statuses, document preparation checklists, and deadline countdowns in one central place.
       </p>
       <div class="onboarding-card__actions">
-        <a href="index.html#listings" class="btn btn--primary" style="padding: 12px 24px; font-weight:600; border-radius:100px;">Explore Schools</a>
+        <a href="index.html#schools-section" class="btn btn--primary" style="padding: 12px 24px; font-weight:600; border-radius:100px;">Explore Schools</a>
       </div>
     </div>
   `;

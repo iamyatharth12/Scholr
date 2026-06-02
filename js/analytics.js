@@ -161,6 +161,14 @@ window.ScholrAnalytics = {
   },
   trackContactFailed: function(reason) {
     this.trackEvent('contact_failed', { reason: reason });
+  },
+
+  // ── Discovery UX Persistent State Telemetry ──────────────
+  trackResultsRestored: function(count, city) {
+    this.trackEvent('results_restored', { school_count: count, city: city });
+  },
+  trackScrollRestored: function(position) {
+    this.trackEvent('scroll_restored', { scroll_position: position });
   }
 };
 

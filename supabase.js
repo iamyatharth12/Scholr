@@ -213,11 +213,23 @@ function buildCardHTML(school, index = 0) {
     ? `<div class="card__trust-row">${verificationHTML}${freshnessHTML}${transparencyNoticeHTML}</div>` 
     : '';
 
+  /* Locality Badge (Local Option / Nearby Option) */
+  const activeCity = localStorage.getItem('scholr_selected_city') || 'Guwahati';
+  const proximityScore = window.ScholrDiscovery ? window.ScholrDiscovery.getProximityScore(school, activeCity) : 10;
+  
+  let localityBadgeHTML = '';
+  if (school.city && school.city.toLowerCase() === activeCity.toLowerCase()) {
+    localityBadgeHTML = `<span class="locality-badge locality-badge--local" title="This school is located in your selected city.">📍 Local Option</span>`;
+  } else if (proximityScore >= 50) {
+    localityBadgeHTML = `<span class="locality-badge locality-badge--nearby" title="This school is located in a nearby town or district.">🚗 Nearby Option</span>`;
+  }
+
   return `
     <article class="school-card card-enter" style="animation-delay: ${index * 0.05}s;" tabindex="0" aria-label="${safe(school.name)}">
       <div class="card__top">
         <div class="card__avatar" style="background:var(--clr-blue-50)">🏫</div>
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          ${localityBadgeHTML}
           <button class="btn btn--ghost save-btn" data-id="${school.id}" style="padding: 6px 10px; font-size: 0.75rem;" aria-label="${isSaved(school.id) ? 'Saved' : 'Save'}">
             ${isSaved(school.id) ? '★ Saved' : '☆ Save'}
           </button>
@@ -273,6 +285,7 @@ function buildCardHTML(school, index = 0) {
 ───────────────────────────────────────────────────────── */
 
 function renderSchools(data) {
+  if (cardsGrid) cardsGrid.classList.remove('loading');
   const loadingDiv = document.getElementById('loading-state');
   if (loadingDiv) loadingDiv.style.display = 'none';
 
@@ -306,7 +319,19 @@ function renderSchools(data) {
   cardsGrid.style.display = '';
   countBadge.textContent = `${data.length} school${data.length !== 1 ? 's' : ''} found`;
 
-  cardsGrid.innerHTML = data.map((school, i) => buildCardHTML(school, i)).join('');
+  // Sort by Proximity Score and Rating
+  const activeCity = localStorage.getItem('scholr_selected_city') || 'Guwahati';
+  let sortedData = [...data];
+  if (window.ScholrDiscovery) {
+    sortedData.sort((a, b) => {
+      const scoreA = window.ScholrDiscovery.getProximityScore(a, activeCity);
+      const scoreB = window.ScholrDiscovery.getProximityScore(b, activeCity);
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return (b.rating || 0) - (a.rating || 0);
+    });
+  }
+
+  cardsGrid.innerHTML = sortedData.map((school, i) => buildCardHTML(school, i)).join('');
 
   /* Wire CTA buttons */
   cardsGrid.querySelectorAll('.card__cta').forEach(btn => {
@@ -415,7 +440,7 @@ async function filterSchools(filters = {}) {
 ───────────────────────────────────────────────────────── */
 
 function showLoadingState() {
-  cardsGrid.style.display = 'none';
+  if (cardsGrid) cardsGrid.classList.add('loading');
   emptyState.hidden = true;
   countBadge.textContent = 'Loading...';
   const loadingDiv = document.getElementById('loading-state');
@@ -447,7 +472,8 @@ async function searchSchools(queryStr) {
   let data = window.Scholr.allSchools;
   
   if (window.ScholrDiscovery) {
-    data = window.ScholrDiscovery.smartSearch(data, safeQuery);
+    const activeCity = localStorage.getItem('scholr_selected_city') || 'Guwahati';
+    data = window.ScholrDiscovery.smartSearch(data, safeQuery, activeCity);
     if (window.ScholrAnalytics) window.ScholrAnalytics.trackSmartSearchUsed(safeQuery, data.length);
   } else {
     // Fallback

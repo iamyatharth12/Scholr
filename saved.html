@@ -16,9 +16,23 @@
   ═══════════════════════════════════════════ -->
   <header class="navbar" id="navbar">
     <div class="container navbar__inner">
-      <a href="index.html" class="navbar__logo">Scholr</a>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <a href="index.html" class="navbar__logo">Scholr</a>
+        <div class="navbar__location-select-wrap">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <select id="navbar-city-select" class="navbar__city-select" aria-label="Select city">
+            <option value="Guwahati">Guwahati</option>
+            <option value="Nagaon">Nagaon</option>
+            <option value="Tezpur">Tezpur</option>
+            <option value="Dibrugarh">Dibrugarh</option>
+            <option value="Jorhat">Jorhat</option>
+            <option value="Silchar">Silchar</option>
+            <option value="Sonitpur">Sonitpur</option>
+          </select>
+        </div>
+      </div>
       <nav class="navbar__links" id="nav-links">
-        <a href="index.html#listings" class="nav-link">Explore</a>
+        <a href="index.html#schools-section" class="nav-link">Explore</a>
         <a href="saved.html" class="nav-link nav-link--active" style="color: var(--clr-blue-600); border-bottom: 2px solid var(--clr-blue-600);">Dashboard</a>
         <a href="school-dashboard.html" class="nav-link" style="color: var(--clr-blue-600); font-weight: 600;">School Portal</a>
         <a href="index.html#about" class="nav-link">About</a>

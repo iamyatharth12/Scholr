@@ -3474,4 +3474,130 @@ body {
   opacity: 0.9;
 }
 
+/* ── LOCATION DISCOVERY STYLING ──────────────────────── */
+.navbar__location-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--clr-bg);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: 4px 10px;
+  margin-left: 12px;
+  color: var(--clr-text-secondary);
+  transition: border-color var(--transition), box-shadow var(--transition), color var(--transition);
+}
+.navbar__location-select-wrap:focus-within {
+  border-color: var(--clr-blue-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  color: var(--clr-blue-600);
+  background: #ffffff;
+}
+.navbar__city-select {
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--clr-text-primary);
+  outline: none;
+  cursor: pointer;
+  padding-right: 4px;
+}
+
+.locality-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 100px;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 3.5px;
+}
+.locality-badge--local {
+  background: var(--clr-green-50);
+  color: var(--clr-green-600);
+}
+.locality-badge--nearby {
+  background: var(--clr-blue-50);
+  color: var(--clr-blue-600);
+}
+
+/* ═══════════════════════════════════════════
+   DISCOVERY UX IMPROVEMENTS (Flickerless Loading & Return Button)
+   ═══════════════════════════════════════════ */
+.cards-grid {
+  transition: opacity 0.25s ease, filter 0.25s ease;
+}
+
+.cards-grid.loading {
+  opacity: 0.45;
+  filter: blur(0.6px);
+  pointer-events: none;
+}
+
+/* Floating Return Button */
+.sticky-return-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+  background: var(--clr-blue-600);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-xl);
+  padding: 12px 24px;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: background var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+  animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.sticky-return-btn:hover {
+  background: var(--clr-blue-700);
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: var(--shadow-lg);
+}
+
+.sticky-return-btn:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.sticky-return-btn svg {
+  transition: transform var(--transition);
+}
+
+.sticky-return-btn:hover svg {
+  transform: translateX(-4px);
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .sticky-return-btn {
+    bottom: 16px;
+    right: 16px;
+    padding: 10px 18px;
+    font-size: 0.85rem;
+  }
+}
+
+
 

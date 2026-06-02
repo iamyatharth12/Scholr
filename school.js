@@ -37,6 +37,35 @@ document.addEventListener('DOMContentLoaded', () => {
       navbar.classList.toggle('scrolled', window.scrollY > 8);
     }, { passive: true });
   }
+
+  // ── Inject Sticky Return to Results Button ──
+  try {
+    const hasExploreSession = sessionStorage.getItem('scholr_discovery_state');
+    if (hasExploreSession) {
+      const returnBtn = document.createElement('a');
+      returnBtn.className = 'sticky-return-btn';
+      returnBtn.href = 'index.html#schools-section';
+      returnBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" 
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" 
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"/>
+          <polyline points="12 19 5 12 12 5"/>
+        </svg>
+        Return to Results
+      `;
+      
+      returnBtn.addEventListener('click', () => {
+        if (window.ScholrAnalytics) {
+          window.ScholrAnalytics.trackEvent('return_to_results_clicked', { school_id: id });
+        }
+      });
+      
+      document.body.appendChild(returnBtn);
+    }
+  } catch (e) {
+    console.warn('[Scholr] Floating button injection skipped:', e);
+  }
 });
 
 function showError(msg) {

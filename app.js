@@ -2,14 +2,14 @@
    app.js — Scholr UI interactions
    All data now comes from Supabase via supabase.js.
    No mock data. No backend.
-───────────────────────────────────────────── */
+ ───────────────────────────────────────────── */
 
 (function () {
   'use strict';
 
   /* ══════════════════════════════════
      Navbar: scroll shadow + mobile menu
-  ══════════════════════════════════ */
+   ══════════════════════════════════ */
   const navbar    = document.getElementById('navbar');
   const hamburger = document.getElementById('hamburger');
   const navLinks  = document.getElementById('nav-links');
@@ -35,7 +35,7 @@
 
   /* ══════════════════════════════════
      Hero: "Use my location" button
-  ══════════════════════════════════ */
+   ══════════════════════════════════ */
   const locationInput  = document.getElementById('location-input');
   const useLocationBtn = document.getElementById('use-location-btn');
   const searchBtn      = document.getElementById('search-btn');
@@ -91,25 +91,40 @@
       } else {
         await window.Scholr.searchSchools(query);
       }
+      saveSessionState();
     }, 300);
   }
 
   locationInput.addEventListener('input', handleSearch);
 
-  searchBtn.addEventListener('click', async () => {
+  // Submit search and scroll smoothly to listings
+  async function submitSearch() {
     const query = locationInput.value.trim();
     if (query === '') {
       await window.Scholr.fetchSchools();
     } else {
-      if (window.ScholrAnalytics) window.ScholrAnalytics.trackSearch(query);
+      if (window.ScholrAnalytics) {
+        window.ScholrAnalytics.trackSearch(query);
+        window.ScholrAnalytics.trackEvent('local_search_performed', { query: query, city: localStorage.getItem('scholr_selected_city') || 'Guwahati' });
+      }
       await window.Scholr.searchSchools(query);
     }
-    document.getElementById('listings').scrollIntoView({ behavior: 'smooth' });
+    saveSessionState();
+    scrollToResultsSmooth();
+  }
+
+  searchBtn.addEventListener('click', submitSearch);
+  
+  locationInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitSearch();
+    }
   });
 
   /* ══════════════════════════════════
      Distance slider: live label update
-  ══════════════════════════════════ */
+   ══════════════════════════════════ */
   const slider        = document.getElementById('distance-slider');
   const distanceValue = document.getElementById('distance-value');
 
@@ -124,8 +139,71 @@
   updateSlider();
 
   /* ══════════════════════════════════
-     Filters → Supabase query
-  ══════════════════════════════════ */
+     Discovery State Persistence & Scroll Restoration Engine
+     ══════════════════════════════════ */
+  const STATE_KEY = 'scholr_discovery_state';
+  let isRestoring = false;
+
+  function getSessionState() {
+    try {
+      const stored = sessionStorage.getItem(STATE_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function saveSessionState(scrollPosition = null) {
+    if (isRestoring) return;
+    if (!document.getElementById('schools-section')) return;
+
+    try {
+      const activeCity = localStorage.getItem('scholr_selected_city') || 'Guwahati';
+      const currentState = getSessionState() || {};
+
+      const facilities = [];
+      if (hostelCb && hostelCb.checked) facilities.push('hostel');
+      if (transCb && transCb.checked) facilities.push('transport');
+      if (sportsCb && sportsCb.checked) facilities.push('sports');
+
+      currentState.selected_city = activeCity;
+      currentState.search_query = locationInput ? locationInput.value.trim() : '';
+      currentState.board_filter = boardSel ? boardSel.value : '';
+      currentState.fee_filter = feeSel ? feeSel.value : '';
+      currentState.rating_filter = ratingSel ? ratingSel.value : '';
+      currentState.facilities = facilities;
+      currentState.admissions_open = adminCb ? adminCb.checked : false;
+      currentState.distance_slider = slider ? slider.value : 5;
+
+      if (scrollPosition !== null) {
+        currentState.scroll_position = scrollPosition;
+      }
+
+      sessionStorage.setItem(STATE_KEY, JSON.stringify(currentState));
+    } catch (e) {
+      console.warn('[Scholr] State save error:', e);
+    }
+  }
+
+  function scrollToResultsSmooth() {
+    if (isRestoring) return;
+    const target = document.getElementById('schools-section');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  // Scroll listener (debounced)
+  let scrollTimeout;
+  window.addEventListener('scroll', () => {
+    if (scrollTimeout) clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      if (document.getElementById('schools-section')) {
+        saveSessionState(window.scrollY);
+      }
+    }, 150);
+  }, { passive: true });
+
   const applyBtn  = document.getElementById('apply-filters-btn');
   const resetBtn  = document.getElementById('reset-btn');
   const boardSel  = document.getElementById('board-filter');
@@ -136,7 +214,10 @@
   const sportsCb  = document.getElementById('filter-sports');
   const adminCb   = document.getElementById('filter-admissions');
 
+  const citySel   = document.getElementById('city-filter');
+
   async function applyFilters() {
+    const city  = citySel ? citySel.value : '';
     const board = boardSel.value;
     const fee   = feeSel.value;
     const minRating = ratingSel ? ratingSel.value : '';
@@ -153,31 +234,79 @@
       if (facilities.length > 0) window.ScholrAnalytics.trackAdvancedFilterUsed('facilities', facilities.join(','));
       if (minRating) window.ScholrAnalytics.trackAdvancedFilterUsed('rating', minRating);
       if (admissionsOpen) window.ScholrAnalytics.trackAdvancedFilterUsed('admissions_open', true);
+      if (city) window.ScholrAnalytics.trackAdvancedFilterUsed('city', city);
     }
 
     boardSel.disabled = true;
     feeSel.disabled = true;
+    if (citySel) citySel.disabled = true;
     applyBtn.disabled = true;
     resetBtn.disabled = true;
     const originalText = applyBtn.textContent;
     applyBtn.textContent = 'Applying...';
 
-    await window.Scholr.filterSchools({ board, fee, minRating, facilities, admissionsOpen });
+    await window.Scholr.filterSchools({ city, board, fee, minRating, facilities, admissionsOpen });
 
     boardSel.disabled = false;
     feeSel.disabled = false;
+    if (citySel) citySel.disabled = false;
     applyBtn.disabled = false;
     resetBtn.disabled = false;
     applyBtn.textContent = originalText;
+
+    saveSessionState();
   }
 
-  boardSel.addEventListener('change', applyFilters);
-  feeSel.addEventListener('change', applyFilters);
-  if (ratingSel) ratingSel.addEventListener('change', applyFilters);
+  // Bind change and checked handlers to execute immediate filter + scroll smoothly
+  boardSel.addEventListener('change', () => { applyFilters(); scrollToResultsSmooth(); });
+  feeSel.addEventListener('change', () => { applyFilters(); scrollToResultsSmooth(); });
+  if (ratingSel) ratingSel.addEventListener('change', () => { applyFilters(); scrollToResultsSmooth(); });
+  
+  if (hostelCb) hostelCb.addEventListener('change', () => { applyFilters(); scrollToResultsSmooth(); });
+  if (transCb) transCb.addEventListener('change', () => { applyFilters(); scrollToResultsSmooth(); });
+  if (sportsCb) sportsCb.addEventListener('change', () => { applyFilters(); scrollToResultsSmooth(); });
+  if (adminCb) adminCb.addEventListener('change', () => { applyFilters(); scrollToResultsSmooth(); });
+
+  if (slider) slider.addEventListener('change', () => { saveSessionState(); });
+
+  if (citySel) {
+    citySel.addEventListener('change', (e) => {
+      const val = e.target.value;
+      const cityMap = {
+        guwahati: 'Guwahati',
+        nagaon: 'Nagaon',
+        tezpur: 'Tezpur',
+        dibrugarh: 'Dibrugarh',
+        jorhat: 'Jorhat',
+        silchar: 'Silchar',
+        sonitpur: 'Sonitpur'
+      };
+
+      const newCity = cityMap[val] || 'Guwahati';
+      const oldCity = localStorage.getItem('scholr_selected_city') || 'Guwahati';
+
+      if (newCity !== oldCity) {
+        localStorage.setItem('scholr_selected_city', newCity);
+        const navSelect = document.getElementById('navbar-city-select');
+        if (navSelect) navSelect.value = newCity;
+
+        if (window.ScholrAnalytics) {
+          window.ScholrAnalytics.trackEvent('city_changed', { old_city: oldCity, new_city: newCity });
+        }
+
+        if (locationInput) {
+          locationInput.placeholder = `Search schools in ${newCity}...`;
+        }
+      }
+
+      applyFilters();
+      scrollToResultsSmooth();
+    });
+  }
 
   applyBtn.addEventListener('click', async () => {
     await applyFilters();
-    document.getElementById('listings').scrollIntoView({ behavior: 'smooth' });
+    scrollToResultsSmooth();
   });
 
   resetBtn.addEventListener('click', async () => {
@@ -188,21 +317,115 @@
     if (transCb) transCb.checked = false;
     if (sportsCb) sportsCb.checked = false;
     if (adminCb) adminCb.checked = false;
+    
+    if (citySel) {
+      const persistedCity = localStorage.getItem('scholr_selected_city') || 'Guwahati';
+      citySel.value = persistedCity.toLowerCase();
+    }
+    
     slider.value   = 5;
     updateSlider();
     
+    // Clear exploration states on reset
+    sessionStorage.removeItem(STATE_KEY);
+    
     resetBtn.disabled = true;
-    await window.Scholr.filterSchools({}); // Reset filters client-side
+    await window.Scholr.filterSchools({ city: citySel ? citySel.value : '' }); // Reset to active city
     resetBtn.disabled = false;
   });
 
   /* ══════════════════════════════════
-     Recommendations Group Rendering
-  ══════════════════════════════════ */
-  window.addEventListener('scholr:schools_loaded', (e) => {
+     Recommendations Group Rendering & State Restoration Hook
+     ══════════════════════════════════ */
+  let stateRestored = false;
+
+  window.addEventListener('scholr:schools_loaded', async (e) => {
     if (window.ScholrDiscovery) {
       const groups = window.ScholrDiscovery.buildRecommendationGroups(e.detail);
       renderRecommendationGroups(groups);
+    }
+
+    const state = getSessionState();
+    if (state && !stateRestored) {
+      stateRestored = true;
+      isRestoring = true;
+
+      // 1. Sync city and navbar selections
+      const activeCity = state.selected_city || localStorage.getItem('scholr_selected_city') || 'Guwahati';
+      localStorage.setItem('scholr_selected_city', activeCity);
+      const navSelect = document.getElementById('navbar-city-select');
+      if (navSelect) navSelect.value = activeCity;
+
+      if (locationInput) {
+        locationInput.value = state.search_query || '';
+        locationInput.placeholder = `Search schools in ${activeCity}...`;
+      }
+
+      // 2. Sync selects
+      if (citySel) citySel.value = activeCity.toLowerCase();
+      if (boardSel) boardSel.value = state.board_filter || '';
+      if (feeSel) feeSel.value = state.fee_filter || '';
+      if (ratingSel) ratingSel.value = state.rating_filter || '';
+
+      // 3. Sync checkboxes
+      if (hostelCb) hostelCb.checked = (state.facilities || []).includes('hostel');
+      if (transCb) transCb.checked = (state.facilities || []).includes('transport');
+      if (sportsCb) sportsCb.checked = (state.facilities || []).includes('sports');
+      if (adminCb) adminCb.checked = state.admissions_open === true;
+
+      // 4. Sync Slider
+      if (slider) {
+        slider.value = state.distance_slider || 5;
+        updateSlider();
+      }
+
+      // 5. Query compile
+      let filteredData = e.detail; // e.detail is allSchools
+      
+      if (state.search_query) {
+        if (window.ScholrDiscovery) {
+          filteredData = window.ScholrDiscovery.smartSearch(filteredData, state.search_query.replace(/[,%]/g, '').trim(), activeCity);
+        }
+      }
+
+      const facilitiesArr = [];
+      if (hostelCb && hostelCb.checked) facilitiesArr.push('hostel');
+      if (transCb && transCb.checked) facilitiesArr.push('transport');
+      if (sportsCb && sportsCb.checked) facilitiesArr.push('sports');
+
+      const filterParams = {
+        city: activeCity,
+        board: boardSel.value,
+        fee: feeSel.value,
+        minRating: ratingSel.value,
+        facilities: facilitiesArr,
+        admissionsOpen: adminCb ? adminCb.checked : false
+      };
+
+      if (window.ScholrDiscovery) {
+        filteredData = window.ScholrDiscovery.filterSchools(filteredData, filterParams);
+      }
+
+      // 6. Force render restored data
+      window.Scholr.renderSchools(filteredData);
+
+      // 7. Track telemetry dispatch
+      if (window.ScholrAnalytics) {
+        window.ScholrAnalytics.trackResultsRestored(filteredData.length, activeCity);
+      }
+
+      // 8. Restore scroll coordinate coordinate without glitches
+      if (state.scroll_position > 0) {
+        setTimeout(() => {
+          window.scrollTo({ top: state.scroll_position, behavior: 'instant' });
+          if (window.ScholrAnalytics) {
+            window.ScholrAnalytics.trackScrollRestored(state.scroll_position);
+          }
+          isRestoring = false;
+        }, 80);
+      } else {
+        isRestoring = false;
+      }
     }
   });
 
@@ -259,12 +482,12 @@
 
   /* ══════════════════════════════════
      Initial load — fetch all schools
-  ══════════════════════════════════ */
+   ══════════════════════════════════ */
   window.Scholr.fetchSchools();
 
   /* ══════════════════════════════════
      FAQ Accordion
-  ══════════════════════════════════ */
+   ══════════════════════════════════ */
   const faqItems = document.querySelectorAll('.faq-item');
   
   faqItems.forEach(item => {
@@ -288,7 +511,7 @@
 
   /* ══════════════════════════════════
      Suggest a School Modal
-  ══════════════════════════════════ */
+   ══════════════════════════════════ */
   const suggestModal = document.getElementById('suggest-school-modal');
   const suggestForm = document.getElementById('suggest-school-form');
   const suggestSuccess = document.getElementById('suggest-school-success');

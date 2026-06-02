@@ -4,6 +4,47 @@
  */
 
 window.ScholrDiscovery = {
+  // ── Proximity & Regional Search Hierarchy ──────────────────────────────────
+
+  getProximityScore(school, activeCity) {
+    if (!activeCity) return 0;
+    const sCity = String(school.city || '').toLowerCase().trim();
+    const aCity = String(activeCity).toLowerCase().trim();
+
+    if (sCity === aCity) return 100;
+
+    // Resolve active city's district and nearby cities in Assam
+    const districtMap = {
+      guwahati: 'kamrup metropolitan',
+      nagaon: 'nagaon',
+      tezpur: 'sonitpur',
+      sonitpur: 'sonitpur',
+      dibrugarh: 'dibrugarh',
+      jorhat: 'jorhat',
+      silchar: 'cachar'
+    };
+
+    const nearbyMap = {
+      guwahati: ['nagaon', 'tezpur', 'sonitpur'],
+      nagaon: ['tezpur', 'sonitpur', 'guwahati'],
+      tezpur: ['nagaon', 'sonitpur', 'jorhat'],
+      sonitpur: ['tezpur', 'nagaon', 'jorhat'],
+      dibrugarh: ['jorhat'],
+      jorhat: ['dibrugarh', 'tezpur', 'sonitpur'],
+      silchar: []
+    };
+
+    const activeDistrict = districtMap[aCity] || '';
+    const schoolDistrict = String(school.district || '').toLowerCase().trim();
+
+    if (activeDistrict && schoolDistrict === activeDistrict) return 75;
+
+    const nearbyList = nearbyMap[aCity] || [];
+    if (nearbyList.includes(sCity)) return 50;
+
+    return 10; // Same state/broader region
+  },
+
   // ── Smart Search ─────────────────────────────────────────────────────────
 
   normalizeSearchText(text) {
@@ -51,17 +92,23 @@ window.ScholrDiscovery = {
     return score;
   },
 
-  smartSearch(schools, query) {
+  smartSearch(schools, query, activeCity) {
     if (!query || query.trim() === '') return schools;
 
     const scored = schools.map(school => {
+      const matchScore = this.matchSchoolKeywords(school, query);
+      const proximityScore = this.getProximityScore(school, activeCity);
+      
+      // Proximity score acts as a highly effective localized sorting weight on matches
+      const finalScore = matchScore > 0 ? (matchScore * 50) + proximityScore : 0;
+
       return {
         school,
-        score: this.matchSchoolKeywords(school, query)
+        score: finalScore
       };
     }).filter(item => item.score > 0);
 
-    // Sort by score descending, then by rating
+    // Sort by combined score descending, then by rating
     scored.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
       return (b.school.rating || 0) - (a.school.rating || 0);
@@ -74,6 +121,11 @@ window.ScholrDiscovery = {
 
   filterSchools(schools, filters) {
     return schools.filter(school => {
+      // City (Primary Local filter control)
+      if (filters.city && school.city && school.city.toLowerCase() !== filters.city.toLowerCase()) {
+        return false;
+      }
+
       // Board
       if (filters.board && school.board && school.board.toLowerCase() !== filters.board.toLowerCase()) {
         return false;
