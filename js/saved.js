@@ -12,9 +12,28 @@ if (!deviceId) {
 
 let savedSchoolsList = JSON.parse(localStorage.getItem('savedSchools')) || [];
 let localMetadataCache = JSON.parse(localStorage.getItem('savedSchoolsMetadata')) || {};
+let parentProgressCache = JSON.parse(localStorage.getItem('parentApplicationProgress')) || {};
+let schoolRequirementsCache = JSON.parse(localStorage.getItem('schoolAdmissionRequirements')) || {};
 let dbSchools = []; // Fetched details for saved schools
 let selectedCompareList = [];
 let autosaveTimeouts = {};
+
+// Safe attribute escaper
+function safeAttr(str) {
+  return String(str ?? '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Helper: Get parent progress for a school
+function getParentProgress(schoolId) {
+  if (!parentProgressCache[schoolId]) {
+    parentProgressCache[schoolId] = {
+      status: 'Exploring',
+      checklist_progress: {},
+      notes: ''
+    };
+  }
+  return parentProgressCache[schoolId];
+}
 
 // Helper: Get metadata for a school
 function getSchoolMetadata(schoolId) {
@@ -74,9 +93,72 @@ async function fetchSavedSchoolsData() {
       });
       localStorage.setItem('savedSchoolsMetadata', JSON.stringify(localMetadataCache));
     }
+
+    // 3. Fetch school-specific requirements from school_admission_requirements
+    const { data: reqsData, error: reqsError } = await db
+      .from('school_admission_requirements')
+      .select('*')
+      .in('school_id', savedSchoolsList);
+
+    if (!reqsError && reqsData) {
+      schoolRequirementsCache = {};
+      reqsData.forEach(row => {
+        if (!schoolRequirementsCache[row.school_id]) {
+          schoolRequirementsCache[row.school_id] = [];
+        }
+        schoolRequirementsCache[row.school_id].push({
+          name: row.requirement_name,
+          required: row.required
+        });
+      });
+      localStorage.setItem('schoolAdmissionRequirements', JSON.stringify(schoolRequirementsCache));
+    }
+
+    // 4. Fetch parent application progress from parent_application_progress
+    const { data: progressData, error: progressError } = await db
+      .from('parent_application_progress')
+      .select('*')
+      .eq('user_identifier', deviceId)
+      .in('school_id', savedSchoolsList);
+
+    if (!progressError && progressData) {
+      progressData.forEach(row => {
+        parentProgressCache[row.school_id] = {
+          status: row.status || 'Exploring',
+          checklist_progress: row.checklist_progress || {},
+          notes: row.notes || '',
+          updated_at: row.updated_at
+        };
+      });
+      localStorage.setItem('parentApplicationProgress', JSON.stringify(parentProgressCache));
+    }
   } catch (err) {
     console.error('[Scholr Dashboard] Database fetch error, falling back to local data:', err);
     await fetchOfflineMockData();
+  }
+}
+
+// Sync parent application progress updates to Supabase (with elegant debounced state)
+async function syncParentProgressToDB(schoolId) {
+  const db = window.ScholrDB;
+  if (!db) return; // Silent local-only if DB unavailable
+
+  const progress = getParentProgress(schoolId);
+  try {
+    const { error } = await db
+      .from('parent_application_progress')
+      .upsert({
+        user_identifier: deviceId,
+        school_id: schoolId,
+        status: progress.status,
+        checklist_progress: progress.checklist_progress,
+        notes: progress.notes || '',
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_identifier,school_id' });
+
+    if (error) throw error;
+  } catch (err) {
+    console.warn('[Scholr Dashboard] Supabase parent progress sync failed:', err.message);
   }
 }
 
@@ -177,41 +259,88 @@ function renderDashboard() {
   updateDashboardCompareBar();
 }
 
+// Calculate upcoming admission milestones countdown (trust-focused dates check)
+function getUpcomingMilestones(school) {
+  const milestones = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const getDaysDiff = (dateStr) => {
+    if (!dateStr) return null;
+    const target = new Date(dateStr);
+    target.setHours(0, 0, 0, 0);
+    const diffTime = target - today;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  // 1. Applications Start Date
+  if (school.application_start_date) {
+    const diff = getDaysDiff(school.application_start_date);
+    if (diff === 0) {
+      milestones.push({ text: "Applications open today!", label: "application_start", icon: "🟢", status: "open_today" });
+    } else if (diff === 1) {
+      milestones.push({ text: "Applications open tomorrow", label: "application_start", icon: "📅", status: "open_tomorrow" });
+    } else if (diff > 1 && diff <= 30) {
+      milestones.push({ text: `Applications open in ${diff} days`, label: "application_start", icon: "📅", status: "open_future" });
+    }
+  }
+
+  // 2. Application Deadline
+  if (school.application_deadline) {
+    const diff = getDaysDiff(school.application_deadline);
+    if (diff === 0) {
+      milestones.push({ text: "Applications close today!", label: "application_deadline", icon: "⏳", status: "deadline_today", urgent: true });
+    } else if (diff === 1) {
+      milestones.push({ text: "Applications close tomorrow!", label: "application_deadline", icon: "⏳", status: "deadline_tomorrow", urgent: true });
+    } else if (diff > 1 && diff <= 10) {
+      milestones.push({ text: `Applications close in ${diff} days`, label: "application_deadline", icon: "⏳", status: "deadline_soon", urgent: true });
+    } else if (diff > 10) {
+      milestones.push({ text: `Applications close in ${diff} days`, label: "application_deadline", icon: "📅", status: "deadline_future" });
+    }
+  }
+
+  // 3. Interview Date
+  if (school.interview_date) {
+    const diff = getDaysDiff(school.interview_date);
+    if (diff === 0) {
+      milestones.push({ text: "Interview scheduled today", label: "interview", icon: "🤝", status: "interview_today", highlight: true });
+    } else if (diff === 1) {
+      milestones.push({ text: "Interview scheduled tomorrow", label: "interview", icon: "🤝", status: "interview_tomorrow", highlight: true });
+    } else if (diff > 1) {
+      milestones.push({ text: `Interview in ${diff} days`, label: "interview", icon: "📅", status: "interview_future" });
+    }
+  }
+
+  // 4. Result Date
+  if (school.result_date) {
+    const diff = getDaysDiff(school.result_date);
+    if (diff === 0) {
+      milestones.push({ text: "Results expected today", label: "result", icon: "📢", status: "result_today", highlight: true });
+    } else if (diff === 1) {
+      milestones.push({ text: "Results expected tomorrow", label: "result", icon: "📢", status: "result_tomorrow", highlight: true });
+    } else if (diff > 1) {
+      milestones.push({ text: `Results expected in ${diff} days`, label: "result", icon: "📅", status: "result_future" });
+    }
+  }
+
+  return milestones;
+}
+
 // Build beautiful, calm dashboard card
 function buildDashboardCardHTML(school, index) {
   const meta = getSchoolMetadata(school.id);
-  const status = meta.decision_status || 'exploring';
-  const notes = meta.saved_school_notes || '';
   
-  // Custom board badge styling
+  // Get parent application progress from cache
+  const progress = getParentProgress(school.id);
+  const appStatus = progress.status || 'Exploring';
+  const progressChecklist = progress.checklist_progress || {};
+  const notes = progress.notes || ''; // Target notes in parent_application_progress
+
   const boardKey = window.Scholr.boardClass ? window.Scholr.boardClass(school.board) : 'cbse';
-  
-  // Fee Category badge
   const feeCategory = school.fee_category || (window.Scholr.inferFeeCategory ? window.Scholr.inferFeeCategory(school.fees) : 'Mid Range');
   const feeClass = window.Scholr.feeCategoryClass ? window.Scholr.feeCategoryClass(feeCategory) : 'fee--mid';
 
-  // Admission status calculations
-  let statusChipHTML = '';
-  let deadlineHTML = '';
-  if (window.ScholrAdmissions) {
-    statusChipHTML = window.ScholrAdmissions.renderStatusChip(school);
-    const countdown = window.ScholrAdmissions.getCountdownText(school);
-    const admStatus = window.ScholrAdmissions.getAdmissionStatus(school);
-    
-    let deadlineClass = 'deadline--info';
-    if (admStatus === 'Closing Soon') deadlineClass = 'deadline--danger';
-    else if (admStatus === 'Opening Soon') deadlineClass = 'deadline--warning';
-    else if (admStatus === 'Applications Closed') deadlineClass = 'deadline--muted';
-
-    deadlineHTML = `
-      <div class="dashboard-card__deadline ${deadlineClass}" data-school-id="${school.id}">
-        <span class="deadline-icon">📅</span>
-        <span class="deadline-text">${window.ScholrAdmissions.formatAdmissionDate(school.application_deadline) !== 'TBA' ? 'Deadline: ' + window.ScholrAdmissions.formatAdmissionDate(school.application_deadline) : 'Admissions details TBA'}</span>
-      </div>
-    `;
-  }
-
-  // Trust indicators
+  // Core Trust & Freshness Indicators
   let trustSignalsHTML = '';
   if (window.ScholrTrust) {
     const badge = window.ScholrTrust.getVerificationBadge(school.verification_level, { compact: true });
@@ -221,20 +350,100 @@ function buildDashboardCardHTML(school, index) {
     }
   }
 
-  // Selected for compare check
-  const isChecked = selectedCompareList.includes(String(school.id)) ? 'checked' : '';
+  // Dynamic Deadline Integration with low-panic UX
+  let actionCenterHTML = '';
+  const milestones = getUpcomingMilestones(school);
+  
+  if (milestones.length > 0) {
+    const itemsHTML = milestones.map(m => {
+      let alertClass = 'action-center-alert';
+      if (m.urgent) alertClass += ' action-center-alert--urgent';
+      else if (m.highlight || m.status === 'open_today') alertClass += ' action-center-alert--success';
+      
+      return `
+        <div class="${alertClass} deadline-tracker-item" data-school-id="${school.id}" data-event-type="${safeAttr(m.label)}" style="cursor:pointer; margin-bottom: 8px;">
+          <span>${m.icon}</span>
+          <div style="text-align: left; flex: 1;">
+            <span class="action-center-alert__title">${m.text}</span>
+            <span class="action-center-alert__sub">Admission Phase: ${m.label.replace('_', ' ')}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    actionCenterHTML = `
+      <div class="workspace__section-header" style="margin-top: 4px;">
+        <span class="workspace__section-title">⏱️ Upcoming Milestones</span>
+      </div>
+      <div class="milestones-alert-container" style="display: flex; flex-direction: column;">
+        ${itemsHTML}
+      </div>
+    `;
+  } else {
+    // Graceful missing data handling
+    actionCenterHTML = `
+      <div class="workspace__section-header" style="margin-top: 4px;">
+        <span class="workspace__section-title">⏱️ Upcoming Milestones</span>
+      </div>
+      <div class="missing-requirements-box" style="padding: 12px; width: 100%;">
+        <p class="missing-requirements-text">No upcoming deadlines published yet.</p>
+      </div>
+    `;
+  }
+
+  // Preparation Checklist steps tracker
+  const steps = [
+    { key: 'documents_prepared', label: 'Documents Prepared' },
+    { key: 'application_started', label: 'Application Started' },
+    { key: 'form_submitted', label: 'Form Submitted' },
+    { key: 'admission_fee_paid', label: 'Admission Fee Paid' },
+    { key: 'interview_completed', label: 'Interview Completed' },
+    { key: 'awaiting_result', label: 'Awaiting Result' }
+  ];
+
+  let checkedCount = 0;
+  const stepsHTML = steps.map(step => {
+    const isChecked = progressChecklist[step.key] === true;
+    if (isChecked) checkedCount++;
+    return `
+      <label class="checklist-item ${isChecked ? 'checked' : ''}">
+        <input type="checkbox" class="step-checklist-cb" data-school-id="${school.id}" data-step-key="${step.key}" ${isChecked ? 'checked' : ''}>
+        <span class="checklist-label">${step.label}</span>
+      </label>
+    `;
+  }).join('');
+
+  const allPrepared = checkedCount === steps.length;
+  const readinessBadge = allPrepared 
+    ? `<span class="readiness-completion-badge">✓ Complete</span>`
+    : `<span class="readiness-completion-badge incomplete">Progress (${checkedCount}/${steps.length})</span>`;
+
+  // HSL visual status chips classes mapping for compact Application Status Selector
+  let appStatusClass = 'status-chip--exploring';
+  const statusLower = appStatus.toLowerCase();
+  if (statusLower.includes('exploring')) appStatusClass = 'status-chip--exploring';
+  else if (statusLower.includes('preparing')) appStatusClass = 'status-chip--preparing';
+  else if (statusLower.includes('started')) appStatusClass = 'status-chip--started';
+  else if (statusLower.includes('submitted')) appStatusClass = 'status-chip--submitted';
+  else if (statusLower.includes('pending')) appStatusClass = 'status-chip--pending';
+  else if (statusLower.includes('awaiting')) appStatusClass = 'status-chip--awaiting';
+  else if (statusLower.includes('admitted') || statusLower.includes('confirm')) appStatusClass = 'status-chip--admitted';
+  else if (statusLower.includes('reject')) appStatusClass = 'status-chip--rejected';
+
+  // Compact Quick Actions Panel
+  const isCheckedCompare = selectedCompareList.includes(String(school.id)) ? 'checked' : '';
 
   return `
     <article class="dashboard-card card-enter" style="animation-delay: ${index * 0.05}s;" id="dash-card-${school.id}" data-id="${school.id}">
       <!-- Header Actions -->
       <div class="dashboard-card__header">
         <label class="dashboard-card__compare-checkbox" title="Select to Quick Compare">
-          <input type="checkbox" class="dash-compare-cb" data-id="${school.id}" ${isChecked}>
+          <input type="checkbox" class="dash-compare-cb" data-id="${school.id}" ${isCheckedCompare}>
           <span class="cb-custom"></span>
           <span class="cb-label">Compare</span>
         </label>
         
-        <button class="dashboard-card__remove-btn" data-id="${school.id}" aria-label="Remove School from shortlist" title="Remove School">
+        <button class="dashboard-card__remove-btn" data-id="${school.id}" aria-label="Remove School from tracker" title="Remove School">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -260,30 +469,42 @@ function buildDashboardCardHTML(school, index) {
         ${trustSignalsHTML}
       </div>
 
-      <!-- Admission Status Indicator -->
-      <div class="dashboard-card__admissions">
-        ${statusChipHTML}
-        ${deadlineHTML}
-      </div>
+      <!-- Upcoming Milestones Countdown Section -->
+      ${actionCenterHTML}
 
-      <!-- Workspace Division Line -->
+      <!-- Division Line -->
       <hr class="dashboard-card__divider">
 
-      <!-- Decision Workspace Area -->
+      <!-- Premium Admission Tracker Area -->
       <div class="dashboard-card__workspace">
+        
+        <!-- Application State HSL Chip Selector -->
         <div class="workspace__status-row">
-          <label class="workspace__label">Decision Status</label>
-          <div class="workspace__status-dropdown-container">
-            <select class="workspace__status-select status-select--${status}" data-id="${school.id}">
-              <option value="exploring" ${status === 'exploring' ? 'selected' : ''}>🔍 Exploring</option>
-              <option value="preferred" ${status === 'preferred' ? 'selected' : ''}>🎯 Preferred</option>
-              <option value="backup" ${status === 'backup' ? 'selected' : ''}>🛡️ Backup Option</option>
-              <option value="rejected" ${status === 'rejected' ? 'selected' : ''}>❌ Muted / Rejected</option>
+          <label class="workspace__label">Admission Status</label>
+          <div class="status-select-wrapper">
+            <select class="workspace__app-status-select status-chip ${appStatusClass}" data-school-id="${school.id}" style="padding: 4px 24px 4px 10px; font-size:0.75rem; border-radius:100px; border:1px solid #cbd5e1; cursor:pointer; outline:none; font-weight: 700;">
+              <option value="Exploring" ${appStatus === 'Exploring' ? 'selected' : ''}>🔍 Exploring</option>
+              <option value="Preparing Documents" ${appStatus === 'Preparing Documents' ? 'selected' : ''}>🟡 Preparing Documents</option>
+              <option value="Application Started" ${appStatus === 'Application Started' ? 'selected' : ''}>🔵 Application Started</option>
+              <option value="Submitted" ${appStatus === 'Submitted' ? 'selected' : ''}>✉️ Submitted</option>
+              <option value="Interview Pending" ${appStatus === 'Interview Pending' ? 'selected' : ''}>🤝 Interview Pending</option>
+              <option value="Awaiting Result" ${appStatus === 'Awaiting Result' ? 'selected' : ''}>📢 Awaiting Result</option>
+              <option value="Admitted" ${appStatus === 'Admitted' ? 'selected' : ''}>🟢 Admitted</option>
+              <option value="Rejected" ${appStatus === 'Rejected' ? 'selected' : ''}>🔴 Rejected</option>
             </select>
           </div>
         </div>
 
-        <!-- Notes System -->
+        <!-- Preparation Checklist Tracker -->
+        <div class="workspace__section-header">
+          <span class="workspace__section-title">📂 Preparation Checklist</span>
+          ${readinessBadge}
+        </div>
+        <div class="workspace__checklist">
+          ${stepsHTML}
+        </div>
+
+        <!-- Inline Notes Field with autosave -->
         <div class="workspace__notes-container">
           <div class="notes__header">
             <span class="notes__title-icon">📝</span>
@@ -292,26 +513,46 @@ function buildDashboardCardHTML(school, index) {
           </div>
           <textarea 
             class="workspace__notes-textarea" 
-            placeholder="Pros: Strong academics, close by&#10;Cons: High sports fee&#10;Next Action: Schedule campus visit..." 
+            placeholder="e.g. Need transport confirmation. Ask about hostel. Prepare transfer certificate..." 
             data-id="${school.id}">${window.Scholr.safe(notes)}</textarea>
+        </div>
+
+        <!-- Quick Actions Panel -->
+        <div class="workspace__section-header" style="margin-bottom: 2px;">
+          <span class="workspace__section-title">⚡ Quick Actions</span>
+        </div>
+        <div class="quick-actions-panel">
+          <a href="school.html?id=${school.id}" class="quick-action-btn quick-action-btn-view" data-school-id="${school.id}">
+            👁️ View School
+          </a>
+          <button class="quick-action-btn quick-action-btn-compare" data-school-id="${school.id}">
+            📊 Compare
+          </button>
+          <button class="quick-action-btn quick-action-btn-contact" data-school-id="${school.id}">
+            📞 Contact
+          </button>
+          ${school.apply_url ? `
+            <a href="${encodeURI(school.apply_url)}" target="_blank" class="quick-action-btn quick-action-btn--apply" data-school-id="${school.id}">
+              🚀 Apply
+            </a>
+          ` : ''}
         </div>
       </div>
     </article>
   `;
 }
 
-// Onboarding template for empty shortlists
+// Onboarding template for empty admission trackers
 function renderSmartOnboarding(container) {
   container.innerHTML = `
-    <div class="onboarding-card">
-      <div class="onboarding-card__hero">🏫</div>
-      <h3 class="onboarding-card__title">Create Your Admission Workspace</h3>
-      <p class="onboarding-card__desc">
-        Shortlist your ideal schools, track official deadline countdowns, compare options side-by-side, and record your private pros & cons in one calm, reliable workspace.
+    <div class="onboarding-card" style="box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); border: 1px solid var(--clr-border);">
+      <div class="onboarding-card__hero" style="font-size: 3rem;">📋</div>
+      <h3 class="onboarding-card__title" style="margin-top: 16px;">No schools in your admission tracker yet.</h3>
+      <p class="onboarding-card__desc" style="color: var(--clr-text-secondary); max-width: 420px; margin-bottom: 24px;">
+        Save schools to start managing your admission journey. Track statuses, document preparation checklists, and deadline countdowns in one central place.
       </p>
       <div class="onboarding-card__actions">
-        <a href="index.html#listings" class="btn btn--primary">Find Schools to Shortlist</a>
-        <button class="btn btn--ghost suggest-school-trigger">+ Suggest a Missing School</button>
+        <a href="index.html#listings" class="btn btn--primary" style="padding: 12px 24px; font-weight:600; border-radius:100px;">Explore Schools</a>
       </div>
     </div>
   `;
@@ -421,39 +662,34 @@ async function renderRecommendations() {
 function wireDashboardCardEvents(cardEl, schoolId) {
   const strId = String(schoolId);
 
-  // 1. Remove Saved School
+  // 1. Remove School from Tracker
   const removeBtn = cardEl.querySelector('.dashboard-card__remove-btn');
   if (removeBtn) {
     removeBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       
-      // Smooth fade-out animation before removal
+      // Smooth scale/fade before removal
       cardEl.style.transform = 'scale(0.95)';
       cardEl.style.opacity = '0';
       
       setTimeout(() => {
-        // Remove from saved schools array
         savedSchoolsList = savedSchoolsList.filter(id => id !== strId);
         localStorage.setItem('savedSchools', JSON.stringify(savedSchoolsList));
-        
-        // Remove from compare list if selected
         selectedCompareList = selectedCompareList.filter(id => id !== strId);
         
-        // Clean up metadata
         delete localMetadataCache[strId];
         localStorage.setItem('savedSchoolsMetadata', JSON.stringify(localMetadataCache));
+        delete parentProgressCache[strId];
+        localStorage.setItem('parentApplicationProgress', JSON.stringify(parentProgressCache));
 
-        // Sync delete to Supabase if connected
+        // Sync deletion to Supabase
         const db = window.ScholrDB;
         if (db) {
-          db.from('saved_schools').delete().eq('device_id', deviceId).eq('school_id', strId)
-            .then(({ error }) => {
-              if (error) console.warn('[Scholr Dashboard] Failed to delete remote metadata:', error.message);
-            });
+          db.from('saved_schools').delete().eq('device_id', deviceId).eq('school_id', strId).then();
+          db.from('parent_application_progress').delete().eq('user_identifier', deviceId).eq('school_id', strId).then();
         }
 
-        // Re-fetch and re-render dashboard
         dbSchools = dbSchools.filter(s => s.id !== schoolId);
         renderDashboard();
       }, 250);
@@ -464,7 +700,8 @@ function wireDashboardCardEvents(cardEl, schoolId) {
   const compareCb = cardEl.querySelector('.dash-compare-cb');
   if (compareCb) {
     compareCb.addEventListener('change', (e) => {
-      if (e.target.checked) {
+      const isChecked = e.target.checked;
+      if (isChecked) {
         if (!selectedCompareList.includes(strId)) {
           if (selectedCompareList.length < 3) {
             selectedCompareList.push(strId);
@@ -477,29 +714,113 @@ function wireDashboardCardEvents(cardEl, schoolId) {
         selectedCompareList = selectedCompareList.filter(id => id !== strId);
       }
       updateDashboardCompareBar();
-    });
-  }
-
-  // 3. Decision Status Change
-  const statusSelect = cardEl.querySelector('.workspace__status-select');
-  if (statusSelect) {
-    statusSelect.addEventListener('change', async (e) => {
-      const oldStatus = getSchoolMetadata(schoolId).decision_status;
-      const newStatus = e.target.value;
-
-      // Update color modifier class on select wrapper
-      statusSelect.className = `workspace__status-select status-select--${newStatus}`;
-
-      // Update state and DB
-      await syncMetadataToDB(schoolId, { decision_status: newStatus });
-
-      if (window.ScholrAnalytics) {
-        window.ScholrAnalytics.trackDecisionStatusChanged(schoolId, oldStatus, newStatus);
+      
+      // Sync text on quick action compare button
+      const quickCompareBtn = cardEl.querySelector('.quick-action-btn-compare');
+      if (quickCompareBtn) {
+        quickCompareBtn.textContent = selectedCompareList.includes(strId) ? '📊 Selected' : '📊 Compare';
       }
     });
   }
 
-  // 4. Personal Notes Autosave with Debounce
+  // 3. Application Status Dropdown Change
+  const appStatusSelect = cardEl.querySelector('.workspace__app-status-select');
+  if (appStatusSelect) {
+    appStatusSelect.addEventListener('change', async (e) => {
+      const progress = getParentProgress(schoolId);
+      const oldStatus = progress.status || 'Exploring';
+      const newStatus = e.target.value;
+
+      // Update HSL chip colors
+      let appStatusClass = 'status-chip--exploring';
+      const statusLower = newStatus.toLowerCase();
+      if (statusLower.includes('exploring')) appStatusClass = 'status-chip--exploring';
+      else if (statusLower.includes('preparing')) appStatusClass = 'status-chip--preparing';
+      else if (statusLower.includes('started')) appStatusClass = 'status-chip--started';
+      else if (statusLower.includes('submitted')) appStatusClass = 'status-chip--submitted';
+      else if (statusLower.includes('pending')) appStatusClass = 'status-chip--pending';
+      else if (statusLower.includes('awaiting')) appStatusClass = 'status-chip--awaiting';
+      else if (statusLower.includes('admitted') || statusLower.includes('confirm')) appStatusClass = 'status-chip--admitted';
+      else if (statusLower.includes('reject')) appStatusClass = 'status-chip--rejected';
+
+      appStatusSelect.className = `workspace__app-status-select status-chip ${appStatusClass}`;
+
+      // Cache & Sync to DB
+      parentProgressCache[schoolId].status = newStatus;
+      localStorage.setItem('parentApplicationProgress', JSON.stringify(parentProgressCache));
+      await syncParentProgressToDB(schoolId);
+
+      if (window.ScholrAnalytics) {
+        window.ScholrAnalytics.trackStatusChanged(schoolId, oldStatus, newStatus);
+      }
+    });
+  }
+
+  // 4. Custom Milestone Checklist Checkboxes
+  cardEl.querySelectorAll('.step-checklist-cb').forEach(cb => {
+    cb.addEventListener('change', async (e) => {
+      const stepKey = e.target.dataset.stepKey;
+      const isChecked = e.target.checked;
+
+      const itemLabel = cb.closest('.checklist-item');
+      if (itemLabel) {
+        itemLabel.classList.toggle('checked', isChecked);
+      }
+
+      // Update Cache
+      const progress = getParentProgress(schoolId);
+      progress.checklist_progress[stepKey] = isChecked;
+      parentProgressCache[schoolId] = progress;
+      localStorage.setItem('parentApplicationProgress', JSON.stringify(parentProgressCache));
+
+      // Debounce and Sync
+      const key = 'progress_' + schoolId;
+      if (autosaveTimeouts[key]) clearTimeout(autosaveTimeouts[key]);
+      autosaveTimeouts[key] = setTimeout(async () => {
+        await syncParentProgressToDB(schoolId);
+        
+        // Live updates for progress completion badge
+        const steps = [
+          'documents_prepared',
+          'application_started',
+          'form_submitted',
+          'admission_fee_paid',
+          'interview_completed',
+          'awaiting_result'
+        ];
+        let checkedCount = 0;
+        steps.forEach(k => {
+          if (progress.checklist_progress[k] === true) checkedCount++;
+        });
+        const badge = cardEl.querySelector('.readiness-completion-badge');
+        if (badge) {
+          if (checkedCount === steps.length) {
+            badge.className = 'readiness-completion-badge';
+            badge.innerHTML = '✓ Complete';
+          } else {
+            badge.className = 'readiness-completion-badge incomplete';
+            badge.innerHTML = `Progress (${checkedCount}/${steps.length})`;
+          }
+        }
+
+        if (window.ScholrAnalytics) {
+          window.ScholrAnalytics.trackChecklistUpdated(schoolId, stepKey, isChecked);
+        }
+      }, 400);
+    });
+  });
+
+  // 5. Timeline Milestones Click Tracker
+  cardEl.querySelectorAll('.deadline-tracker-item').forEach(alertBox => {
+    alertBox.addEventListener('click', () => {
+      const eventType = alertBox.dataset.eventType;
+      if (window.ScholrAnalytics) {
+        window.ScholrAnalytics.trackDeadlineViewed(schoolId, eventType);
+      }
+    });
+  });
+
+  // 6. Personal Notes Autosave with Debounce
   const textarea = cardEl.querySelector('.workspace__notes-textarea');
   const autosaveStatus = cardEl.querySelector(`#autosave-status-${schoolId}`);
   if (textarea && autosaveStatus) {
@@ -508,17 +829,20 @@ function wireDashboardCardEvents(cardEl, schoolId) {
       autosaveStatus.textContent = 'Saving...';
       autosaveStatus.classList.add('saving');
 
-      // Clear existing timeout
-      if (autosaveTimeouts[schoolId]) {
-        clearTimeout(autosaveTimeouts[schoolId]);
-      }
-
-      // Set debounce timeout (400ms)
+      if (autosaveTimeouts[schoolId]) clearTimeout(autosaveTimeouts[schoolId]);
+      
       autosaveTimeouts[schoolId] = setTimeout(async () => {
-        await syncMetadataToDB(schoolId, { saved_school_notes: text });
-        autosaveStatus.textContent = 'All changes saved';
-        autosaveStatus.classList.remove('saving');
+        // Cache & save in parent progress table
+        const progress = getParentProgress(schoolId);
+        progress.notes = text;
+        parentProgressCache[schoolId] = progress;
+        localStorage.setItem('parentApplicationProgress', JSON.stringify(parentProgressCache));
         
+        await syncParentProgressToDB(schoolId);
+        
+        autosaveStatus.textContent = 'Saved';
+        autosaveStatus.classList.remove('saving');
+
         if (window.ScholrAnalytics) {
           window.ScholrAnalytics.trackNotesUpdated(schoolId);
         }
@@ -526,12 +850,61 @@ function wireDashboardCardEvents(cardEl, schoolId) {
     });
   }
 
-  // 5. Track deadline clicked
-  const deadlineBanner = cardEl.querySelector(`.dashboard-card__deadline`);
-  if (deadlineBanner) {
-    deadlineBanner.addEventListener('click', () => {
+  // 7. Quick Actions Panel events
+  // 7a. View School Button
+  const qvBtn = cardEl.querySelector('.quick-action-btn-view');
+  if (qvBtn) {
+    qvBtn.addEventListener('click', () => {
       if (window.ScholrAnalytics) {
-        window.ScholrAnalytics.trackDeadlineClicked(schoolId, 'application_deadline');
+        window.ScholrAnalytics.trackQuickActionClicked(schoolId, 'view_school');
+      }
+    });
+  }
+
+  // 7b. Compare Toggle Button
+  const qcBtn = cardEl.querySelector('.quick-action-btn-compare');
+  if (qcBtn) {
+    qcBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (compareCb) {
+        compareCb.click(); // programmatically triggers compareCb change handler
+        if (window.ScholrAnalytics) {
+          window.ScholrAnalytics.trackQuickActionClicked(schoolId, 'compare_toggle');
+        }
+      }
+    });
+  }
+
+  // 7c. Contact School Action Button
+  const qcontactBtn = cardEl.querySelector('.quick-action-btn-contact');
+  if (qcontactBtn) {
+    qcontactBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.ScholrAnalytics) {
+        window.ScholrAnalytics.trackQuickActionClicked(schoolId, 'contact_school');
+      }
+      
+      // Try WhatsApp first, then office phone, email, website or details page fallback
+      const school = dbSchools.find(s => s.id === schoolId) || {};
+      if (school.whatsapp_contact) {
+        const waClean = school.whatsapp_contact.replace(/\D/g, '');
+        window.open(`https://wa.me/${waClean || school.whatsapp_contact}`, '_blank');
+      } else if (school.admission_office_phone || school.phone) {
+        window.location.href = `tel:${school.admission_office_phone || school.phone}`;
+      } else if (school.email) {
+        window.location.href = `mailto:${school.email}`;
+      } else {
+        window.location.href = `school.html?id=${schoolId}#action-buttons`;
+      }
+    });
+  }
+
+  // 7d. Outbound Apply Button
+  const qapplyBtn = cardEl.querySelector('.quick-action-btn--apply');
+  if (qapplyBtn) {
+    qapplyBtn.addEventListener('click', () => {
+      if (window.ScholrAnalytics) {
+        window.ScholrAnalytics.trackQuickActionClicked(schoolId, 'apply_link');
       }
     });
   }
@@ -562,6 +935,25 @@ function updateDashboardCompareBar() {
     
     // Maintain checked visual state in case of multiple renders
     cb.checked = selectedCompareList.includes(id);
+    
+    // Update matching quick action button styling
+    const cardEl = document.getElementById(`dash-card-${id}`);
+    if (cardEl) {
+      const qBtn = cardEl.querySelector('.quick-action-btn-compare');
+      if (qBtn) {
+        if (selectedCompareList.includes(id)) {
+          qBtn.textContent = '📊 Selected';
+          qBtn.style.background = 'var(--clr-blue-600)';
+          qBtn.style.color = '#ffffff';
+          qBtn.style.borderColor = 'var(--clr-blue-600)';
+        } else {
+          qBtn.textContent = '📊 Compare';
+          qBtn.style.background = '';
+          qBtn.style.color = '';
+          qBtn.style.borderColor = '';
+        }
+      }
+    }
   });
 }
 
@@ -578,7 +970,7 @@ async function initDashboard() {
 
   // 3. Track dashboard opened
   if (window.ScholrAnalytics) {
-    window.ScholrAnalytics.trackDashboardOpened(savedSchoolsList.length);
+    window.ScholrAnalytics.trackApplicationTrackerOpened(savedSchoolsList.length);
   }
 
   // 4. Wire Compare Action Button

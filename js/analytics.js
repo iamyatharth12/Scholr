@@ -130,6 +130,26 @@ window.ScholrAnalytics = {
   },
   trackPendingUpdateSubmitted: function(schoolId, updateType) {
     this.trackEvent('pending_update_submitted', { school_id: schoolId, update_type: updateType });
+  },
+
+  // ── Level 7: Admission Workflow System & Tracker MVP ──
+  trackApplicationTrackerOpened: function(savedCount) {
+    this.trackEvent('application_tracker_opened', { saved_count: savedCount });
+  },
+  trackStatusChanged: function(schoolId, oldStatus, newStatus) {
+    this.trackEvent('status_changed', { school_id: schoolId, old_status: oldStatus, new_status: newStatus });
+  },
+  trackChecklistUpdated: function(schoolId, itemKey, isChecked) {
+    this.trackEvent('checklist_updated', { school_id: schoolId, item_key: itemKey, is_checked: isChecked });
+  },
+  trackDeadlineViewed: function(schoolId, eventName) {
+    this.trackEvent('deadline_viewed', { school_id: schoolId, event_name: eventName });
+  },
+  trackQuickActionClicked: function(schoolId, actionType) {
+    this.trackEvent('quick_action_clicked', { school_id: schoolId, action_type: actionType });
+  },
+  trackNotesUpdated: function(schoolId) {
+    this.trackEvent('notes_updated', { school_id: schoolId });
   }
 };
 

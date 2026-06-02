@@ -3118,3 +3118,360 @@ body {
   min-height: auto;
 }
 
+/* ═══════════════════════════════════════════
+   LEVEL 7: ADMISSION WORKSPACE SYSTEM STYLES
+   ───────────────────────────────────────────
+   Premium Notion + Modern EdTech Workspace
+   ═══════════════════════════════════════════ */
+
+/* Section headings inside dashboard cards */
+.workspace__section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.workspace__section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--clr-text-secondary);
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Application Readiness Checklist & Progress States */
+.workspace__checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-lg);
+  padding: 14px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--clr-text-primary);
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.2s;
+}
+
+.checklist-item:hover {
+  opacity: 0.9;
+}
+
+.checklist-item input[type="checkbox"] {
+  accent-color: #10b981;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.checklist-label {
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.checklist-item.checked .checklist-label {
+  color: var(--clr-text-muted);
+  text-decoration: line-through;
+}
+
+/* Document Readiness Banner */
+.readiness-completion-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #047857;
+  background-color: #d1fae5;
+  border: 1px solid #a7f3d0;
+  padding: 3px 8px;
+  border-radius: 100px;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.readiness-completion-badge.incomplete {
+  color: #b45309;
+  background-color: #fef3c7;
+  border: 1px solid #fde68a;
+}
+
+/* Graceful Missing Data Handling */
+.missing-requirements-box {
+  background: #f8fafc;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.missing-requirements-text {
+  font-size: 0.8rem;
+  color: var(--clr-text-secondary);
+  font-weight: 500;
+  margin: 0;
+}
+
+.contact-school-shortcut {
+  font-size: 0.75rem !important;
+  padding: 6px 12px !important;
+  font-weight: 600;
+  min-height: auto !important;
+}
+
+/* Parent Checklist Steps System */
+.workspace__steps-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-lg);
+  padding: 14px;
+}
+
+@media (max-width: 480px) {
+  .workspace__steps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.step-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--clr-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.step-checkbox-item input[type="checkbox"] {
+  accent-color: var(--clr-blue-600);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.step-checkbox-item.checked {
+  color: var(--clr-blue-700);
+  font-weight: 600;
+}
+
+/* One-Click Admission Contact Panel */
+.quick-actions-panel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+
+@media (max-width: 480px) {
+  .quick-actions-panel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.quick-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 4px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  color: var(--clr-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.quick-action-btn:hover {
+  border-color: var(--clr-blue-300);
+  background: var(--clr-blue-50);
+  color: var(--clr-blue-700);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.quick-action-btn svg {
+  color: var(--clr-text-muted);
+  transition: color 0.2s;
+}
+
+.quick-action-btn:hover svg {
+  color: var(--clr-blue-600);
+}
+
+/* Apply CTA highlight */
+.quick-action-btn--apply {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+  grid-column: span 1;
+}
+
+.quick-action-btn--apply:hover {
+  background: var(--clr-blue-600);
+  border-color: var(--clr-blue-600);
+  color: #ffffff !important;
+}
+
+.quick-action-btn--apply:hover svg {
+  color: #ffffff !important;
+}
+
+.quick-action-btn--apply svg {
+  color: #2563eb;
+}
+
+/* WhatsApp CTA quick actions */
+.quick-action-btn--whatsapp {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.quick-action-btn--whatsapp:hover {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff !important;
+}
+
+.quick-action-btn--whatsapp:hover svg {
+  color: #ffffff !important;
+}
+
+.quick-action-btn--whatsapp svg {
+  color: #22c55e;
+}
+
+/* Compact status selector enhancements */
+.status-select-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.status-chip {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-chip--exploring {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.status-chip--preparing {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fcd34d;
+}
+
+.status-chip--started {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.status-chip--submitted {
+  background: #e0e7ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
+.status-chip--pending {
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+
+.status-chip--awaiting {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #ffedd5;
+}
+
+.status-chip--admitted {
+  background: #d1fae5;
+  color: #047857;
+  border: 1px solid #6ee7b7;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+}
+
+.status-chip--rejected {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* Action Center Alerts with low-panic UX */
+.action-center-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+.action-center-alert--urgent {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+.action-center-alert--success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.action-center-alert__title {
+  font-weight: 700;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.action-center-alert__sub {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+
