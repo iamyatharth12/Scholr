@@ -3599,5 +3599,359 @@ body {
   }
 }
 
+/* ═══════════════════════════════════════════
+   PREMIUM LOCATION CHIP & MODAL SELECTOR SELECTOR
+   ═══════════════════════════════════════════ */
+.navbar__location-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--clr-blue-50);
+  border: 1px solid var(--clr-blue-100);
+  color: var(--clr-blue-700);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-size: 0.825rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.navbar__location-chip:hover {
+  background: var(--clr-blue-100);
+  border-color: var(--clr-blue-500);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(37,99,235,.1);
+}
+
+.navbar__location-chip:focus-visible {
+  box-shadow: 0 0 0 3px rgba(37,99,235,.25);
+}
+
+.location-chip__pin {
+  color: var(--clr-blue-600);
+  flex-shrink: 0;
+}
+
+.location-chip__text {
+  color: var(--clr-text-primary);
+}
+
+.location-chip__text strong {
+  color: var(--clr-blue-700);
+  font-weight: 700;
+}
+
+.location-chip__action {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--clr-blue-600);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--clr-surface);
+  padding: 2px 8px;
+  border-radius: 100px;
+  border: 1px solid var(--clr-blue-100);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.navbar__location-chip:hover .location-chip__action {
+  background: var(--clr-blue-600);
+  color: #ffffff;
+  border-color: var(--clr-blue-600);
+}
+
+/* Modal Selector Overlay */
+.location-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(17,24,39,0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  transition: opacity var(--transition);
+}
+
+.location-modal {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-xl);
+  max-width: 480px;
+  width: 100%;
+  padding: 28px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: slideInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.location-modal__close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--clr-text-muted);
+  transition: color var(--transition);
+}
+
+.location-modal__close:hover {
+  color: var(--clr-text-primary);
+}
+
+.location-modal__title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--clr-text-primary);
+  line-height: 1.25;
+}
+
+.location-modal__sub {
+  font-size: 0.875rem;
+  color: var(--clr-text-secondary);
+  line-height: 1.5;
+  margin-top: -6px;
+}
+
+/* Geolocation Detect Button */
+.location-modal__detect-btn {
+  width: 100%;
+  justify-content: center;
+  min-height: 46px;
+  font-weight: 600;
+  background: var(--clr-blue-50);
+  border-color: var(--clr-blue-100);
+  color: var(--clr-blue-700);
+  border-radius: var(--radius-md);
+  gap: 8px;
+  margin-top: 4px;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.location-modal__detect-btn:hover {
+  background: var(--clr-blue-100);
+  border-color: var(--clr-blue-500);
+  transform: translateY(-1px);
+}
+
+.detect-btn__icon {
+  animation: pulseTarget 2s infinite ease-in-out;
+}
+
+@keyframes pulseTarget {
+  0% { transform: scale(1); opacity: 0.95; }
+  50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 3px rgba(37,99,235,0.25)); }
+  100% { transform: scale(1); opacity: 0.95; }
+}
+
+.location-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--clr-blue-600);
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spinLoader 0.7s linear infinite;
+}
+
+@keyframes spinLoader {
+  to { transform: rotate(360deg); }
+}
+
+/* Search bar input */
+.location-modal__search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--clr-bg);
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: 0 16px;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.location-modal__search-wrap:focus-within {
+  border-color: var(--clr-blue-500);
+  background: #ffffff;
+}
+
+.location-modal__search-icon {
+  color: var(--clr-text-muted);
+  flex-shrink: 0;
+  margin-right: 10px;
+}
+
+.location-modal__search {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 11px 0;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  color: var(--clr-text-primary);
+  outline: none;
+}
+
+.location-modal__search::placeholder {
+  color: var(--clr-text-muted);
+}
+
+/* City Grid */
+.location-modal__city-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.location-modal__city-list::-webkit-scrollbar {
+  width: 6px;
+}
+.location-modal__city-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.location-modal__city-list::-webkit-scrollbar-thumb {
+  background: var(--clr-border);
+  border-radius: 100px;
+}
+
+.location-modal__city-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border: 1.5px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition), background var(--transition), transform var(--transition);
+}
+
+.location-modal__city-card:hover, .location-modal__city-card:focus-visible {
+  border-color: var(--clr-blue-500);
+  background: var(--clr-blue-50);
+  transform: translateX(2px);
+}
+
+.location-modal__city-card.active {
+  border-color: var(--clr-blue-600);
+  background: var(--clr-blue-50);
+}
+
+.city-card__details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.city-card__name {
+  font-size: 0.925rem;
+  font-weight: 700;
+  color: var(--clr-text-primary);
+}
+
+.location-modal__city-card.active .city-card__name {
+  color: var(--clr-blue-700);
+}
+
+.city-card__count {
+  font-size: 0.775rem;
+  color: var(--clr-text-secondary);
+}
+
+.city-card__active-badge {
+  color: var(--clr-blue-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.location-modal__empty {
+  font-size: 0.875rem;
+  color: var(--clr-text-secondary);
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* Alert fallback message banner */
+.location-modal__alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.location-alert__icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.location-alert__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.location-alert__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.location-alert__sub {
+  font-size: 0.775rem;
+  color: #b45309;
+  line-height: 1.4;
+}
+
+@keyframes slideInAlert {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .location-modal-overlay {
+    padding: 16px;
+    align-items: flex-end;
+  }
+  .location-modal {
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    margin-bottom: -16px;
+    max-height: 85vh;
+    animation: slideInUpMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes slideInUpMobile {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .navbar__location-chip {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    gap: 5px;
+  }
+  .location-chip__action {
+    display: none; /* Hide CHANGE link text in small mobile navbar to keep it compact */
+  }
+}
+
 
 

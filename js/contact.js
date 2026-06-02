@@ -531,47 +531,6 @@
       }
     });
 
-    // ── Global City Location Selector Sync ──────────────────────────────────
-    const navSelect = document.getElementById('navbar-city-select');
-    if (navSelect) {
-      // Load persisted city on DOMContentLoaded
-      const persistedCity = localStorage.getItem('scholr_selected_city') || 'Guwahati';
-      navSelect.value = persistedCity;
-
-      // Sync other city controls on load if they exist (e.g. city filter on explore page)
-      const filterSelect = document.getElementById('city-filter');
-      const locInput = document.getElementById('location-input');
-      if (filterSelect) filterSelect.value = persistedCity.toLowerCase();
-      if (locInput) locInput.placeholder = `Search schools in ${persistedCity}...`;
-
-      navSelect.addEventListener('change', function (e) {
-        const newCity = e.target.value;
-        const oldCity = localStorage.getItem('scholr_selected_city') || 'Guwahati';
-        
-        if (newCity === oldCity) return;
-
-        localStorage.setItem('scholr_selected_city', newCity);
-
-        // Track analytics
-        if (window.ScholrAnalytics) {
-          window.ScholrAnalytics.trackEvent('city_changed', { old_city: oldCity, new_city: newCity });
-        }
-
-        // Sync explore page city filter if present
-        const exploreFilter = document.getElementById('city-filter');
-        if (exploreFilter) {
-          exploreFilter.value = newCity.toLowerCase();
-          // Trigger filter change event
-          exploreFilter.dispatchEvent(new Event('change'));
-        } else {
-          // If not on explore page, redirect to explore listings
-          const currentPath = window.location.pathname;
-          if (!currentPath.includes('index.html') && currentPath !== '/' && !currentPath.endsWith('/Scholr/')) {
-            window.location.href = 'index.html#schools-section';
-          }
-        }
-      });
-    }
   });
 
   // Expose triggers globally for direct programmatic open

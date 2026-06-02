@@ -19,17 +19,10 @@
     <div class="container navbar__inner">
       <div style="display: flex; align-items: center; gap: 8px;">
         <a href="#" class="navbar__logo">Scholr</a>
-        <div class="navbar__location-select-wrap">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <select id="navbar-city-select" class="navbar__city-select" aria-label="Select city">
-            <option value="Guwahati">Guwahati</option>
-            <option value="Nagaon">Nagaon</option>
-            <option value="Tezpur">Tezpur</option>
-            <option value="Dibrugarh">Dibrugarh</option>
-            <option value="Jorhat">Jorhat</option>
-            <option value="Silchar">Silchar</option>
-            <option value="Sonitpur">Sonitpur</option>
-          </select>
+        <div class="navbar__location-chip" id="navbar-location-chip" tabindex="0" role="button" aria-label="Change location, current city Guwahati">
+          <svg class="location-chip__pin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span class="location-chip__text">Near You: <strong id="navbar-current-city">Guwahati</strong></span>
+          <span class="location-chip__action">Change</span>
         </div>
       </div>
       <nav class="navbar__links" id="nav-links">
@@ -393,6 +386,8 @@
   <script src="js/analytics.js"></script>
   <!-- Scholr Contact Us workflow -->
   <script src="js/contact.js"></script>
+  <!-- Scholr Location sync engine -->
+  <script src="js/location.js"></script>
   <!-- Scholr Trust module -->
   <script src="js/trust.js"></script>
   <!-- Scholr DB integration -->

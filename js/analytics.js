@@ -169,6 +169,12 @@ window.ScholrAnalytics = {
   },
   trackScrollRestored: function(position) {
     this.trackEvent('scroll_restored', { scroll_position: position });
+  },
+  trackGeolocationUsed: function(status) {
+    this.trackEvent('geolocation_used', { status: status });
+  },
+  trackFallbackCityShown: function(detected, fallback) {
+    this.trackEvent('fallback_city_shown', { detected_city: detected, showing_fallback: fallback });
   }
 };
 

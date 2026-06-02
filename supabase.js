@@ -305,12 +305,13 @@ function renderSchools(data) {
 
     if (!isSavedPage && titleEl) {
       iconEl.textContent   = '🔍';
-      titleEl.textContent  = 'No schools matched your criteria';
+      titleEl.textContent  = 'No schools currently listed for this city';
       subEl.innerHTML =
-        'Try adjusting your board or fee filter — or help us grow!' +
-        '<br><button class="btn btn--ghost suggest-school-trigger" ' +
-        'style="margin-top:14px;font-size:0.85rem;padding:8px 16px;" ' +
-        'id="empty-state-suggest-btn">+ Suggest a missing school</button>';
+        'Try selecting another supported city or help us grow by suggesting a missing school!' +
+        '<div style="display:flex; gap:12px; justify-content:center; margin-top:16px; flex-wrap:wrap;">' +
+        '<button class="btn btn--primary change-city-empty-trigger" style="font-size:0.85rem; padding:8px 16px; min-height:38px;">Change City</button>' +
+        '<button class="btn btn--ghost suggest-school-trigger" style="font-size:0.85rem; padding:8px 16px; min-height:38px;">Suggest School</button>' +
+        '</div>';
     }
     return;
   }

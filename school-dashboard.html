@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>School Portal — Scholr</title>
-  <meta name="description" content="Manage your school listing, gallery, and admissions on Scholr. Built for verified school administrators." />
+  <meta name="description"
+    content="Manage your school listing, gallery, and admissions on Scholr. Built for verified school administrators." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="dashboard.css">
 </head>
+
 <body>
 
   <!-- ═══════════════════════════════════════════
@@ -20,23 +23,18 @@
     <div class="container navbar__inner">
       <div style="display: flex; align-items: center; gap: 8px;">
         <a href="index.html" class="navbar__logo">Scholr</a>
-        <div class="navbar__location-select-wrap">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <select id="navbar-city-select" class="navbar__city-select" aria-label="Select city">
-            <option value="Guwahati">Guwahati</option>
-            <option value="Nagaon">Nagaon</option>
-            <option value="Tezpur">Tezpur</option>
-            <option value="Dibrugarh">Dibrugarh</option>
-            <option value="Jorhat">Jorhat</option>
-            <option value="Silchar">Silchar</option>
-            <option value="Sonitpur">Sonitpur</option>
-          </select>
+        <div class="navbar__location-chip" id="navbar-location-chip" tabindex="0" role="button" aria-label="Change location, current city Guwahati">
+          <svg class="location-chip__pin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span class="location-chip__text">Near You: <strong id="navbar-current-city">Guwahati</strong></span>
+          <span class="location-chip__action">Change</span>
         </div>
       </div>
       <nav class="navbar__links" id="nav-links">
         <a href="index.html#schools-section" class="nav-link">Explore</a>
         <a href="saved.html" class="nav-link">Saved Schools</a>
-        <a href="school-dashboard.html" class="nav-link nav-link--active" style="color: var(--clr-blue-600); font-weight: 600; border-bottom: 2px solid var(--clr-blue-600);">School Portal</a>
+        <a href="school-dashboard.html" class="nav-link nav-link--active"
+          style="color: var(--clr-blue-600); font-weight: 600; border-bottom: 2px solid var(--clr-blue-600);">School
+          Portal</a>
         <a href="index.html#about" class="nav-link">About</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
@@ -50,7 +48,7 @@
 
   <!-- Main View Router -->
   <main id="portal-view">
-    
+
     <!-- ───────────────────────────────────────────
          1. AUTH VIEW (Shown when unauthenticated)
          ─────────────────────────────────────────── -->
@@ -58,14 +56,17 @@
       <!-- Left Column Branding Pane -->
       <div class="auth-brand-pane">
         <div class="auth-brand-glow"></div>
-        <div class="auth-brand-logo">Scholr <span style="font-weight: 400; font-size: 1.2rem; color: var(--clr-blue-400);">portal</span></div>
+        <div class="auth-brand-logo">Scholr <span
+            style="font-weight: 400; font-size: 1.2rem; color: var(--clr-blue-400);">portal</span></div>
         <h2 class="auth-brand-title">Put your school in front of thousands of parents.</h2>
-        <p class="auth-brand-desc">Claim your profile to update fees, add stunning campus images, manage live admissions, and build verified trust with families in your city.</p>
-        
+        <p class="auth-brand-desc">Claim your profile to update fees, add stunning campus images, manage live
+          admissions, and build verified trust with families in your city.</p>
+
         <div class="auth-features-list">
           <div class="auth-feature-item">
-            <svg class="auth-feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
+            <svg class="auth-feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
             </svg>
             <div>
               <span class="auth-feature-bold">Fresh Profile Metrics</span>
@@ -73,8 +74,9 @@
             </div>
           </div>
           <div class="auth-feature-item">
-            <svg class="auth-feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
+            <svg class="auth-feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
             </svg>
             <div>
               <span class="auth-feature-bold">Stunning Logo &amp; Image Galleries</span>
@@ -82,12 +84,14 @@
             </div>
           </div>
           <div class="auth-feature-item">
-            <svg class="auth-feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
+            <svg class="auth-feature-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
             </svg>
             <div>
               <span class="auth-feature-bold">Live Admissions Timeline</span>
-              <span class="auth-feature-text">Update application open/close cycles, deadlines, and steps dynamically.</span>
+              <span class="auth-feature-text">Update application open/close cycles, deadlines, and steps
+                dynamically.</span>
             </div>
           </div>
         </div>
@@ -106,18 +110,19 @@
           <form id="form-login" novalidate>
             <h3 class="auth-card-title">Welcome back</h3>
             <p class="auth-card-subtitle">Log in with your administrator account.</p>
-            
+
             <div class="form-group" style="margin-bottom: 16px;">
               <label for="login-email" class="dash-label">Official Email</label>
               <input type="email" id="login-email" class="dash-input" required placeholder="admin@yourschool.edu">
             </div>
-            
+
             <div class="form-group" style="margin-bottom: 24px;">
               <label for="login-password" class="dash-label">Password</label>
               <input type="password" id="login-password" class="dash-input" required placeholder="••••••••">
             </div>
-            
-            <button type="submit" class="btn btn--primary" style="width: 100%; height: 46px; font-weight: 600;" id="login-submit">
+
+            <button type="submit" class="btn btn--primary" style="width: 100%; height: 46px; font-weight: 600;"
+              id="login-submit">
               Sign In to Portal
             </button>
           </form>
@@ -126,7 +131,7 @@
           <form id="form-register" style="display: none;" novalidate>
             <h3 class="auth-card-title">Activate School Portal</h3>
             <p class="auth-card-subtitle">Claim your listing and create your portal account.</p>
-            
+
             <!-- School Selection Select Dropdown -->
             <div class="form-group" style="margin-bottom: 16px;">
               <label for="register-school-select" class="dash-label">Select Your School Listing *</label>
@@ -164,7 +169,8 @@
               <input type="password" id="register-password" class="dash-input" required placeholder="Min 6 characters">
             </div>
 
-            <button type="submit" class="btn btn--primary" style="width: 100%; height: 46px; font-weight: 600;" id="register-submit">
+            <button type="submit" class="btn btn--primary" style="width: 100%; height: 46px; font-weight: 600;"
+              id="register-submit">
               Register &amp; Claim Listing
             </button>
           </form>
@@ -180,20 +186,23 @@
         <!-- Developer Sandbox Test Alert at the top -->
         <div class="sandbox-card">
           <span class="sandbox-badge">🔬 Developer Sandbox Bypass</span>
-          <p class="sandbox-desc">In standard production environments, our team verifies school claims within 24-48 hours. For local evaluation, click below to instantly approve your claim!</p>
+          <p class="sandbox-desc">In standard production environments, our team verifies school claims within 24-48
+            hours. For local evaluation, click below to instantly approve your claim!</p>
           <button class="btn-sandbox" id="btn-sandbox-approve">
             ⚡ Approve My Claim Instantly (Demo)
           </button>
         </div>
 
         <div class="pending-pulse-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
         </div>
         <h2 class="pending-title">Verification in Progress</h2>
-        <p class="pending-sub">Your claim has been submitted. Our moderation team is validating your domain ownership and official designation. You'll receive full access upon approval.</p>
-        
+        <p class="pending-sub">Your claim has been submitted. Our moderation team is validating your domain ownership
+          and official designation. You'll receive full access upon approval.</p>
+
         <div class="pending-details-box">
           <div class="pending-detail-row">
             <span class="pending-detail-label">School Claimed:</span>
@@ -209,7 +218,8 @@
           </div>
           <div class="pending-detail-row">
             <span class="pending-detail-label">Verification Status:</span>
-            <span class="pending-detail-val" style="color: var(--clr-dash-warning); font-weight: 700;">⌛ Pending Moderation</span>
+            <span class="pending-detail-val" style="color: var(--clr-dash-warning); font-weight: 700;">⌛ Pending
+              Moderation</span>
           </div>
         </div>
 
@@ -232,8 +242,9 @@
             <div class="dash-school-meta">
               <h4 class="dash-school-name" id="sidebar-school-name">Greenwood High</h4>
               <span class="dash-school-role">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--clr-dash-success)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--clr-dash-success)"
+                  stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
                 </svg>
                 Approved Admin
               </span>
@@ -241,42 +252,82 @@
           </div>
 
           <!-- Profile Completeness Indicator Block -->
-          <div class="dash-completeness" style="padding: 16px 0; border-bottom: 1px solid var(--clr-dash-border); margin-bottom: 20px;">
-            <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:600; margin-bottom:8px;">
+          <div class="dash-completeness"
+            style="padding: 16px 0; border-bottom: 1px solid var(--clr-dash-border); margin-bottom: 20px;">
+            <div
+              style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:600; margin-bottom:8px;">
               <span style="color:var(--clr-dash-text-sec);">Profile Richness:</span>
               <span id="completeness-score" style="color:var(--clr-dash-brand);">0%</span>
             </div>
             <div style="width:100%; height:8px; background:var(--clr-dash-border); border-radius:4px; overflow:hidden;">
-              <div id="completeness-bar" style="width:0%; height:100%; background:var(--clr-dash-brand); transition:width 0.4s ease, background 0.4s ease; border-radius:4px;"></div>
+              <div id="completeness-bar"
+                style="width:0%; height:100%; background:var(--clr-dash-brand); transition:width 0.4s ease, background 0.4s ease; border-radius:4px;">
+              </div>
             </div>
             <div style="display: flex; align-items: center; gap: 6px; margin-top:8px;">
               <span style="font-size: 0.85rem;" id="completeness-tier-icon">⚠️</span>
-              <span id="completeness-tier" style="font-weight:700; text-transform:uppercase; font-size:0.7rem; color: var(--clr-dash-text-sec); letter-spacing:0.02em;">Limited Info</span>
+              <span id="completeness-tier"
+                style="font-weight:700; text-transform:uppercase; font-size:0.7rem; color: var(--clr-dash-text-sec); letter-spacing:0.02em;">Limited
+                Info</span>
             </div>
           </div>
 
           <!-- Navigation Links -->
           <nav class="dash-nav">
             <button class="dash-nav-btn active" data-tab="tab-profile">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M12 11h.01"/><path d="M12 7h.01"/><path d="M12 15h.01"/><path d="M8 11h.01"/><path d="M8 7h.01"/><path d="M8 15h.01"/><path d="M16 11h.01"/><path d="M16 7h.01"/><path d="M16 15h.01"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16" />
+                <path d="M12 11h.01" />
+                <path d="M12 7h.01" />
+                <path d="M12 15h.01" />
+                <path d="M8 11h.01" />
+                <path d="M8 7h.01" />
+                <path d="M8 15h.01" />
+                <path d="M16 11h.01" />
+                <path d="M16 7h.01" />
+                <path d="M16 15h.01" />
+              </svg>
               School Profile
             </button>
             <button class="dash-nav-btn" data-tab="tab-gallery">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
               Campus Gallery
             </button>
             <button class="dash-nav-btn" data-tab="tab-admissions">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
               Admissions Info
             </button>
             <button class="dash-nav-btn" data-tab="tab-verification">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
               Trust &amp; Verification
             </button>
-            
+
             <!-- Platform Admin Moderation Sidebar trigger (Visible for test reviews) -->
-            <button class="dash-nav-btn" data-tab="tab-moderation" id="sidebar-moderation-btn" style="border: 1.5px dashed var(--clr-dash-brand); color: var(--clr-dash-brand); font-weight: 700; margin-top: 24px;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            <button class="dash-nav-btn" data-tab="tab-moderation" id="sidebar-moderation-btn"
+              style="border: 1.5px dashed var(--clr-dash-brand); color: var(--clr-dash-brand); font-weight: 700; margin-top: 24px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
               Moderation Queue (Admin)
             </button>
           </nav>
@@ -285,8 +336,11 @@
         <!-- Sidebar Footer Action -->
         <div class="dash-sidebar-footer">
           <button class="btn-signout" id="dash-logout-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
             Sign Out Portal
           </button>
@@ -295,24 +349,30 @@
 
       <!-- Workspace Body Section -->
       <section class="dash-content">
-        
+
         <!-- Dynamic Pending Review Banner -->
-        <div id="dashboard-pending-banner" style="display:none; align-items:center; gap:14px; background:var(--clr-dash-warning-bg); border:1.5px dashed var(--clr-dash-warning); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:28px;">
+        <div id="dashboard-pending-banner"
+          style="display:none; align-items:center; gap:14px; background:var(--clr-dash-warning-bg); border:1.5px dashed var(--clr-dash-warning); border-radius:var(--radius-md); padding:16px 20px; margin-bottom:28px;">
           <span style="font-size:1.4rem;">⌛</span>
           <div style="flex-grow:1;">
-            <span style="font-weight:700; color:var(--clr-dash-text-pri); font-size:0.875rem; display:block; margin-bottom:2px;">Moderated Publishing Cycle: Pending Edits</span>
-            <span style="font-size:0.75rem; color:var(--clr-dash-text-sec);">This school currently has profile or admissions modifications awaiting moderator approval. Newly saved details will go live on the directory once approved.</span>
+            <span
+              style="font-weight:700; color:var(--clr-dash-text-pri); font-size:0.875rem; display:block; margin-bottom:2px;">Moderated
+              Publishing Cycle: Pending Edits</span>
+            <span style="font-size:0.75rem; color:var(--clr-dash-text-sec);">This school currently has profile or
+              admissions modifications awaiting moderator approval. Newly saved details will go live on the directory
+              once approved.</span>
           </div>
         </div>
 
         <form id="form-dashboard" novalidate>
-          
+
           <!-- A. TAB: PROFILE SECTION -->
           <div class="dash-tab-view" id="tab-profile">
             <div class="dash-header">
               <span class="dash-pretitle">Foundational Listing</span>
               <h2 class="dash-title">General School Profile</h2>
-              <p class="dash-subtitle">Update your official metadata, board associations, facilities, and contact details.</p>
+              <p class="dash-subtitle">Update your official metadata, board associations, facilities, and contact
+                details.</p>
             </div>
 
             <!-- Card: Details -->
@@ -354,11 +414,13 @@
 
                 <div class="form-group form-group-full">
                   <label for="prof-desc" class="dash-label">About / General Description</label>
-                  <textarea id="prof-desc" class="dash-textarea" rows="4" placeholder="Brief summary of your school's vision, philosophy, and history..."></textarea>
+                  <textarea id="prof-desc" class="dash-textarea" rows="4"
+                    placeholder="Brief summary of your school's vision, philosophy, and history..."></textarea>
                 </div>
 
                 <!-- Transport & Hostel checkboxes -->
-                <div class="form-group form-group-full" style="display: flex; gap: 32px; border-top: 1px solid var(--clr-dash-border); padding-top: 20px; margin-top: 10px; flex-wrap: wrap;">
+                <div class="form-group form-group-full"
+                  style="display: flex; gap: 32px; border-top: 1px solid var(--clr-dash-border); padding-top: 20px; margin-top: 10px; flex-wrap: wrap;">
                   <div class="toggle-container">
                     <label class="toggle-switch">
                       <input type="checkbox" id="prof-transport">
@@ -366,7 +428,8 @@
                     </label>
                     <div>
                       <span class="toggle-label-text">Transport Facility Available</span>
-                      <span class="dash-input-help" style="margin: 0;">Does the school provide official school bus/van transport?</span>
+                      <span class="dash-input-help" style="margin: 0;">Does the school provide official school bus/van
+                        transport?</span>
                     </div>
                   </div>
                   <div class="toggle-container">
@@ -376,7 +439,8 @@
                     </label>
                     <div>
                       <span class="toggle-label-text">Hostel/Boarding Available</span>
-                      <span class="dash-input-help" style="margin: 0;">Does the school offer on-campus boarding/residential hosteling?</span>
+                      <span class="dash-input-help" style="margin: 0;">Does the school offer on-campus
+                        boarding/residential hosteling?</span>
                     </div>
                   </div>
                 </div>
@@ -387,16 +451,19 @@
             <div class="dash-card">
               <div class="dash-card-header">
                 <h3 class="dash-card-title">School Facilities &amp; Amenities</h3>
-                <p class="dash-card-subtitle">List down facilities available on campus. Separate items by pressing Enter or Comma.</p>
+                <p class="dash-card-subtitle">List down facilities available on campus. Separate items by pressing Enter
+                  or Comma.</p>
               </div>
-              
+
               <div class="form-group">
                 <label class="dash-label">Current Offerings</label>
                 <div class="chips-input-container" id="facilities-chips-container">
                   <!-- Chips inserted dynamically by JS -->
-                  <input type="text" class="chip-input-field" id="facilities-chip-input" placeholder="Type and press Enter...">
+                  <input type="text" class="chip-input-field" id="facilities-chip-input"
+                    placeholder="Type and press Enter...">
                 </div>
-                <span class="dash-input-help">Common listings: Smart Classrooms, Library, Science Labs, Swimming Pool, Transport, Sports Ground.</span>
+                <span class="dash-input-help">Common listings: Smart Classrooms, Library, Science Labs, Swimming Pool,
+                  Transport, Sports Ground.</span>
               </div>
             </div>
 
@@ -404,16 +471,19 @@
             <div class="dash-card">
               <div class="dash-card-header">
                 <h3 class="dash-card-title">Recommendation Tags (Best For)</h3>
-                <p class="dash-card-subtitle">Highlight key strengths (e.g. Best for Academics, Strong Sports Culture). Press Enter/Comma to add.</p>
+                <p class="dash-card-subtitle">Highlight key strengths (e.g. Best for Academics, Strong Sports Culture).
+                  Press Enter/Comma to add.</p>
               </div>
-              
+
               <div class="form-group">
                 <label class="dash-label">Highlight Tags</label>
                 <div class="chips-input-container" id="bestfor-chips-container">
                   <!-- Chips inserted dynamically by JS -->
-                  <input type="text" class="chip-input-field" id="bestfor-chip-input" placeholder="Type and press Enter...">
+                  <input type="text" class="chip-input-field" id="bestfor-chip-input"
+                    placeholder="Type and press Enter...">
                 </div>
-                <span class="dash-input-help">Common highlights: Best for Academics, Strong Sports Culture, Modern Infrastructure, Discipline Focused, Budget Friendly, Large Campus.</span>
+                <span class="dash-input-help">Common highlights: Best for Academics, Strong Sports Culture, Modern
+                  Infrastructure, Discipline Focused, Budget Friendly, Large Campus.</span>
               </div>
             </div>
 
@@ -457,21 +527,26 @@
             <div class="dash-card">
               <div class="dash-card-header">
                 <h3 class="dash-card-title">Brand Identity</h3>
-                <p class="dash-card-subtitle">Your school logo displays alongside listings and the main profile page.</p>
+                <p class="dash-card-subtitle">Your school logo displays alongside listings and the main profile page.
+                </p>
               </div>
 
               <div class="logo-upload-wrap">
-                <div class="logo-preview-box" id="logo-preview" style="cursor:pointer;" title="Click to upload brand logo">🏫</div>
+                <div class="logo-preview-box" id="logo-preview" style="cursor:pointer;"
+                  title="Click to upload brand logo">🏫</div>
                 <input type="file" id="logo-file-input" accept="image/*" style="display:none;">
                 <div style="flex-grow: 1;">
                   <label class="dash-label">Logo Image Upload</label>
-                  <button type="button" class="btn btn--outline" id="btn-upload-logo" style="padding: 8px 16px; font-size: 0.8rem; margin-bottom: 6px;">
+                  <button type="button" class="btn btn--outline" id="btn-upload-logo"
+                    style="padding: 8px 16px; font-size: 0.8rem; margin-bottom: 6px;">
                     Choose Logo Image File
                   </button>
-                  <button type="button" class="btn btn--ghost" id="btn-delete-logo" style="padding: 8px 12px; font-size: 0.8rem; color: var(--clr-dash-danger); display: none;">
+                  <button type="button" class="btn btn--ghost" id="btn-delete-logo"
+                    style="padding: 8px 12px; font-size: 0.8rem; color: var(--clr-dash-danger); display: none;">
                     Delete
                   </button>
-                  <span class="dash-input-help">Supports square formats (PNG, JPG). Saved to secure storage folder.</span>
+                  <span class="dash-input-help">Supports square formats (PNG, JPG). Saved to secure storage
+                    folder.</span>
                   <!-- Hidden Logo field -->
                   <input type="hidden" id="gal-logo">
                 </div>
@@ -482,7 +557,8 @@
             <div class="dash-card">
               <div class="dash-card-header">
                 <h3 class="dash-card-title">Campus Images Showcase</h3>
-                <p class="dash-card-subtitle">Upload high-resolution files representing facilities and classrooms. Click any card to upload.</p>
+                <p class="dash-card-subtitle">Upload high-resolution files representing facilities and classrooms. Click
+                  any card to upload.</p>
               </div>
 
               <div class="gallery-grid">
@@ -498,7 +574,8 @@
                   <input type="file" id="file-input-0" class="file-input" accept="image/*" style="display:none;">
                   <div class="gallery-card-body">
                     <label class="dash-label">Category</label>
-                    <select id="gal-category-0" class="dash-select gallery-category-select" style="font-size:0.8rem; padding:6px 10px;">
+                    <select id="gal-category-0" class="dash-select gallery-category-select"
+                      style="font-size:0.8rem; padding:6px 10px;">
                       <option value="Campus Overview">Campus Overview</option>
                       <option value="Classrooms">Classrooms</option>
                       <option value="Laboratories">Laboratories</option>
@@ -506,7 +583,9 @@
                       <option value="Infrastructure">Infrastructure</option>
                       <option value="Events & Culture">Events &amp; Culture</option>
                     </select>
-                    <button type="button" class="btn-delete-gallery-img" id="btn-del-0" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
+                    <button type="button" class="btn-delete-gallery-img" id="btn-del-0"
+                      style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete
+                      Image</button>
                     <!-- Hidden field URL -->
                     <input type="hidden" id="gal-url-0" class="gallery-url-holder">
                   </div>
@@ -524,7 +603,8 @@
                   <input type="file" id="file-input-1" class="file-input" accept="image/*" style="display:none;">
                   <div class="gallery-card-body">
                     <label class="dash-label">Category</label>
-                    <select id="gal-category-1" class="dash-select gallery-category-select" style="font-size:0.8rem; padding:6px 10px;">
+                    <select id="gal-category-1" class="dash-select gallery-category-select"
+                      style="font-size:0.8rem; padding:6px 10px;">
                       <option value="Classrooms">Classrooms</option>
                       <option value="Campus Overview">Campus Overview</option>
                       <option value="Laboratories">Laboratories</option>
@@ -532,7 +612,9 @@
                       <option value="Infrastructure">Infrastructure</option>
                       <option value="Events & Culture">Events &amp; Culture</option>
                     </select>
-                    <button type="button" class="btn-delete-gallery-img" id="btn-del-1" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
+                    <button type="button" class="btn-delete-gallery-img" id="btn-del-1"
+                      style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete
+                      Image</button>
                     <!-- Hidden field URL -->
                     <input type="hidden" id="gal-url-1" class="gallery-url-holder">
                   </div>
@@ -550,7 +632,8 @@
                   <input type="file" id="file-input-2" class="file-input" accept="image/*" style="display:none;">
                   <div class="gallery-card-body">
                     <label class="dash-label">Category</label>
-                    <select id="gal-category-2" class="dash-select gallery-category-select" style="font-size:0.8rem; padding:6px 10px;">
+                    <select id="gal-category-2" class="dash-select gallery-category-select"
+                      style="font-size:0.8rem; padding:6px 10px;">
                       <option value="Laboratories">Laboratories</option>
                       <option value="Campus Overview">Campus Overview</option>
                       <option value="Classrooms">Classrooms</option>
@@ -558,7 +641,9 @@
                       <option value="Infrastructure">Infrastructure</option>
                       <option value="Events & Culture">Events &amp; Culture</option>
                     </select>
-                    <button type="button" class="btn-delete-gallery-img" id="btn-del-2" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
+                    <button type="button" class="btn-delete-gallery-img" id="btn-del-2"
+                      style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete
+                      Image</button>
                     <!-- Hidden field URL -->
                     <input type="hidden" id="gal-url-2" class="gallery-url-holder">
                   </div>
@@ -576,7 +661,8 @@
                   <input type="file" id="file-input-3" class="file-input" accept="image/*" style="display:none;">
                   <div class="gallery-card-body">
                     <label class="dash-label">Category</label>
-                    <select id="gal-category-3" class="dash-select gallery-category-select" style="font-size:0.8rem; padding:6px 10px;">
+                    <select id="gal-category-3" class="dash-select gallery-category-select"
+                      style="font-size:0.8rem; padding:6px 10px;">
                       <option value="Sports Facilities">Sports Facilities</option>
                       <option value="Campus Overview">Campus Overview</option>
                       <option value="Classrooms">Classrooms</option>
@@ -584,7 +670,9 @@
                       <option value="Infrastructure">Infrastructure</option>
                       <option value="Events & Culture">Events &amp; Culture</option>
                     </select>
-                    <button type="button" class="btn-delete-gallery-img" id="btn-del-3" style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete Image</button>
+                    <button type="button" class="btn-delete-gallery-img" id="btn-del-3"
+                      style="width:100%; margin-top:8px; display:none; background:none; border:1px solid var(--clr-dash-border); padding:6px; font-size:0.75rem; color:var(--clr-dash-danger); cursor:pointer; border-radius:var(--radius-sm);">Delete
+                      Image</button>
                     <!-- Hidden field URL -->
                     <input type="hidden" id="gal-url-3" class="gallery-url-holder">
                   </div>
@@ -598,7 +686,8 @@
             <div class="dash-header">
               <span class="dash-pretitle">Cycle Management</span>
               <h2 class="dash-title">Admission Details &amp; Deadlines</h2>
-              <p class="dash-subtitle">Share real-time status and milestones of your upcoming admission cycles with prospective parents.</p>
+              <p class="dash-subtitle">Share real-time status and milestones of your upcoming admission cycles with
+                prospective parents.</p>
             </div>
 
             <!-- Admissions Status Card -->
@@ -621,7 +710,8 @@
             <div class="dash-card">
               <div class="dash-card-header">
                 <h3 class="dash-card-title">Key Cycle Dates</h3>
-                <p class="dash-card-subtitle">Provide exact key dates for admissions processing. Empty dates will render as 'To Be Announced' (TBA).</p>
+                <p class="dash-card-subtitle">Provide exact key dates for admissions processing. Empty dates will render
+                  as 'To Be Announced' (TBA).</p>
               </div>
 
               <div class="form-grid">
@@ -655,7 +745,8 @@
 
               <div class="form-group">
                 <label for="adm-notes" class="dash-label">Instructions / Guidelines</label>
-                <textarea id="adm-notes" class="dash-textarea" rows="3" placeholder="e.g. Please bring birth certificate, passport size photographs, and previous marksheets for submission..."></textarea>
+                <textarea id="adm-notes" class="dash-textarea" rows="3"
+                  placeholder="e.g. Please bring birth certificate, passport size photographs, and previous marksheets for submission..."></textarea>
               </div>
             </div>
           </div>
@@ -665,7 +756,8 @@
             <div class="dash-header">
               <span class="dash-pretitle">Account Trust</span>
               <h2 class="dash-title">Verification Badges &amp; History</h2>
-              <p class="dash-subtitle">Review verification badges, review logs, and the freshness transparency indicator of your portal profile.</p>
+              <p class="dash-subtitle">Review verification badges, review logs, and the freshness transparency indicator
+                of your portal profile.</p>
             </div>
 
             <!-- Status Card -->
@@ -676,17 +768,21 @@
               </div>
 
               <div style="display: flex; flex-direction: column; gap: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--clr-dash-border);">
+                <div
+                  style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--clr-dash-border);">
                   <span class="dash-label" style="margin:0;">Verification Tier:</span>
                   <span id="ver-badge-container">
                     <!-- Badges render here -->
                     <span class="status-badge status-badge--verified">Verified</span>
                   </span>
                 </div>
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--clr-dash-border);">
+
+                <div
+                  style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--clr-dash-border);">
                   <span class="dash-label" style="margin:0;">Claim Verification Status:</span>
-                  <span class="status-badge status-badge--verified" style="background-color: var(--clr-dash-success-bg); color: var(--clr-dash-success); font-weight:700;">✓ Active Approved</span>
+                  <span class="status-badge status-badge--verified"
+                    style="background-color: var(--clr-dash-success-bg); color: var(--clr-dash-success); font-weight:700;">✓
+                    Active Approved</span>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0;">
@@ -700,7 +796,8 @@
             <div class="dash-card">
               <div class="dash-card-header">
                 <h3 class="dash-card-title">Profile Update Submissions History</h3>
-                <p class="dash-card-subtitle">History of profile, gallery, and admissions updates submitted to the moderation queue.</p>
+                <p class="dash-card-subtitle">History of profile, gallery, and admissions updates submitted to the
+                  moderation queue.</p>
               </div>
 
               <div id="verification-history-container" style="display: flex; flex-direction: column; gap: 12px;">
@@ -718,9 +815,11 @@
                 <p class="dash-card-subtitle">Official reviewer notes logged during audit cycles.</p>
               </div>
 
-              <div style="background: var(--clr-dash-bg); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--clr-dash-border);">
+              <div
+                style="background: var(--clr-dash-bg); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--clr-dash-border);">
                 <p class="dash-label" style="margin-bottom: 8px;">Moderator Assessment Notes:</p>
-                <p id="ver-reviewer-notes" style="font-size:0.875rem; color: var(--clr-dash-text-sec); line-height: 1.5; margin:0; font-style: italic;">
+                <p id="ver-reviewer-notes"
+                  style="font-size:0.875rem; color: var(--clr-dash-text-sec); line-height: 1.5; margin:0; font-style: italic;">
                   No review comments logged yet.
                 </p>
               </div>
@@ -732,7 +831,8 @@
             <div class="dash-header">
               <span class="dash-pretitle">Platform Moderation</span>
               <h2 class="dash-title">Admin Review Queue</h2>
-              <p class="dash-subtitle">Review, approve, or reject pending profile edits submitted by school administrators.</p>
+              <p class="dash-subtitle">Review, approve, or reject pending profile edits submitted by school
+                administrators.</p>
             </div>
 
             <!-- Moderation requests list container -->
@@ -741,17 +841,22 @@
               <div class="dash-card" style="text-align: center; padding: 48px 24px;">
                 <span style="font-size: 2.5rem; display: block; margin-bottom: 12px;">🎉</span>
                 <h4 style="margin:0 0 8px 0; font-size:1.1rem; color:var(--clr-dash-text-pri);">Queue is Clear</h4>
-                <p style="color:var(--clr-dash-text-sec); font-size:0.85rem; margin:0;">No school updates are currently awaiting moderation review.</p>
+                <p style="color:var(--clr-dash-text-sec); font-size:0.85rem; margin:0;">No school updates are currently
+                  awaiting moderation review.</p>
               </div>
             </div>
           </div>
 
           <!-- Bottom Fixed Action bar for saving edits -->
           <div class="dash-actions-bar">
-            <span id="save-status-msg" style="margin-right:auto; align-self:center; font-size:0.85rem; font-weight:600; transition:var(--transition-fast);"></span>
+            <span id="save-status-msg"
+              style="margin-right:auto; align-self:center; font-size:0.85rem; font-weight:600; transition:var(--transition-fast);"></span>
             <button type="submit" class="btn-dash-save" id="btn-save-changes">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
               </svg>
               Save Dashboard Edits
             </button>
@@ -787,6 +892,8 @@
   <script src="js/analytics.js"></script>
   <!-- Scholr Contact Us workflow -->
   <script src="js/contact.js"></script>
+  <!-- Scholr Location sync engine -->
+  <script src="js/location.js"></script>
   <!-- Scholr Trust badge utilities -->
   <script src="js/trust.js"></script>
   <!-- Scholr Admissions timeline parser -->
@@ -800,13 +907,13 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const hamburger = document.getElementById('hamburger');
-      const navLinks  = document.getElementById('nav-links');
-      const navbar    = document.getElementById('navbar');
-      
+      const navLinks = document.getElementById('nav-links');
+      const navbar = document.getElementById('navbar');
+
       window.addEventListener('scroll', () => {
         navbar.classList.toggle('scrolled', window.scrollY > 8);
       }, { passive: true });
-      
+
       hamburger.addEventListener('click', () => {
         const open = hamburger.classList.toggle('open');
         navLinks.classList.toggle('open', open);
@@ -815,4 +922,5 @@
     });
   </script>
 </body>
+
 </html>
