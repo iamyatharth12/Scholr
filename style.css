@@ -3953,5 +3953,69 @@ body {
   }
 }
 
+/* Modal Footer Action Buttons */
+.location-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--clr-border);
+}
+
+.location-modal__footer .btn {
+  padding: 8px 18px;
+  min-height: 38px;
+  font-size: 0.85rem;
+}
+
+#location-modal-apply {
+  background: var(--clr-blue-600);
+  border-color: var(--clr-blue-600);
+  color: #ffffff;
+}
+
+#location-modal-apply:hover {
+  background: var(--clr-blue-700);
+  border-color: var(--clr-blue-700);
+}
+
+#location-modal-apply:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: var(--clr-text-muted);
+  border-color: var(--clr-border);
+  color: #ffffff;
+}
+
+/* Radio Selection indicators (✓ Checked vs ○ Open) */
+.city-card__radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--clr-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: transparent;
+  background: transparent;
+  flex-shrink: 0;
+  transition: background var(--transition), border-color var(--transition), color var(--transition), transform var(--transition);
+}
+
+.location-modal__city-card:hover .city-card__radio {
+  border-color: var(--clr-blue-500);
+}
+
+.location-modal__city-card.active .city-card__radio {
+  border-color: var(--clr-blue-600);
+  background: var(--clr-blue-600);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
 
 

@@ -1,7 +1,7 @@
 /**
  * Scholr Premium Location Selector & Geolocation Engine
- * Handles modern city chip, searchable modals, reverse geocoding, 
- * city normalization, and proximity fallbacks.
+ * Upgraded with deliberate selection, radio checkmarks, modal footers,
+ * search filters, geocoding Nominatim, and proximity fallbacks.
  */
 
 (function () {
@@ -17,6 +17,9 @@
     { name: 'Silchar', count: 3, lat: 24.8333, lon: 92.7789, aliases: ['cachar', 'silchar district', 'barak valley'] },
     { name: 'Sonitpur', count: 1, lat: 26.6800, lon: 92.8500, aliases: ['balipara', 'sonitpur district'] }
   ];
+
+  // Temporary selected city within the modal session
+  let tempSelectedCity = null;
 
   // ── Core Location Algorithms ──────────────────────────────────────────────
 
@@ -48,7 +51,6 @@
     let minDistance = Infinity;
 
     for (const city of SUPPORTED_CITIES) {
-      // Euclidean distance is suitable for finding the closest coordinate cluster in the region
       const dx = lat - city.lat;
       const dy = lon - city.lon;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -129,6 +131,11 @@
             <span class="location-alert__sub" id="location-alert-sub">Automatically showing nearest supported city.</span>
           </div>
         </div>
+
+        <div class="location-modal__footer">
+          <button class="btn btn--ghost" id="location-modal-cancel">Cancel</button>
+          <button class="btn btn--primary" id="location-modal-apply">Apply City</button>
+        </div>
       </div>
     `;
 
@@ -146,11 +153,15 @@
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
 
+    // Set temp selected city to the currently active city
+    tempSelectedCity = localStorage.getItem('scholr_selected_city') || 'Guwahati';
+
     // Clear search
     const searchInput = document.getElementById('location-modal-search');
     if (searchInput) searchInput.value = '';
     
     renderCityGrid('');
+    updateApplyButtonState();
     
     // Hide any previous alert toasts
     const alertBanner = document.getElementById('location-modal-alert');
@@ -166,11 +177,16 @@
     document.body.style.overflow = '';
   }
 
+  function updateApplyButtonState() {
+    const applyBtn = document.getElementById('location-modal-apply');
+    if (!applyBtn) return;
+    applyBtn.disabled = !tempSelectedCity;
+  }
+
   function renderCityGrid(query = '') {
     const cityList = document.getElementById('location-modal-city-list');
     if (!cityList) return;
 
-    const currentCity = localStorage.getItem('scholr_selected_city') || 'Guwahati';
     const cleanQuery = query.toLowerCase().trim();
 
     const filtered = SUPPORTED_CITIES.filter(city => {
@@ -184,35 +200,56 @@
     }
 
     cityList.innerHTML = filtered.map(city => {
-      const isActive = city.name.toLowerCase() === currentCity.toLowerCase();
+      const isActive = tempSelectedCity && city.name.toLowerCase() === tempSelectedCity.toLowerCase();
+      
+      // Premium selected indicator design (✓ checked circle vs ○ empty circle)
+      const indicatorHTML = isActive 
+        ? `<span class="city-card__radio active">✓</span>`
+        : `<span class="city-card__radio"></span>`;
+
       return `
         <div class="location-modal__city-card ${isActive ? 'active' : ''}" data-city="${city.name}" tabindex="0" role="button">
-          <div class="city-card__details">
-            <span class="city-card__name">${city.name}</span>
-            <span class="city-card__count">${city.count} verified school${city.count !== 1 ? 's' : ''}</span>
+          <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
+            ${indicatorHTML}
+            <div class="city-card__details">
+              <span class="city-card__name">${city.name}</span>
+              <span class="city-card__count">${city.count} verified school${city.count !== 1 ? 's' : ''}</span>
+            </div>
           </div>
-          ${isActive ? `
-            <span class="city-card__active-badge">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-            </span>
-          ` : ''}
         </div>
       `;
     }).join('');
 
-    // Attach click events to card items
+    // Attach card action triggers
     cityList.querySelectorAll('.location-modal__city-card').forEach(card => {
+      // 1. Single click: just highlights selection visually
       card.addEventListener('click', () => {
-        changeGlobalCity(card.dataset.city);
+        tempSelectedCity = card.dataset.city;
+        renderCityGrid(query);
+        updateApplyButtonState();
+      });
+
+      // 2. Double click: instantly applies and closes
+      card.addEventListener('dblclick', () => {
+        tempSelectedCity = card.dataset.city;
+        changeGlobalCity(tempSelectedCity);
         closeLocationModal();
       });
+
+      // Keyboard focus selection controls
       card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === 'Enter') {
+          // Enter: instantly apply
           e.preventDefault();
-          changeGlobalCity(card.dataset.city);
+          tempSelectedCity = card.dataset.city;
+          changeGlobalCity(tempSelectedCity);
           closeLocationModal();
+        } else if (e.key === ' ') {
+          // Space: just select inside list
+          e.preventDefault();
+          tempSelectedCity = card.dataset.city;
+          renderCityGrid(query);
+          updateApplyButtonState();
         }
       });
     });
@@ -230,6 +267,21 @@
     modal.addEventListener('click', (e) => {
       if (e.target === modal) closeLocationModal();
     });
+
+    // Modal footer Cancel button click dismisses
+    const cancelBtn = document.getElementById('location-modal-cancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', closeLocationModal);
+
+    // Modal footer Apply button click commits changes
+    const applyBtn = document.getElementById('location-modal-apply');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', () => {
+        if (tempSelectedCity) {
+          changeGlobalCity(tempSelectedCity);
+          closeLocationModal();
+        }
+      });
+    }
 
     // Search filter typing listener
     const searchInput = document.getElementById('location-modal-search');
@@ -280,19 +332,26 @@
         const normalized = normalizeCity(detectedName);
 
         if (normalized) {
-          // Success: Normalized matches a supported city
-          changeGlobalCity(normalized);
+          // Success: highlights the normalized city inside the modal
+          tempSelectedCity = normalized;
+          renderCityGrid('');
+          updateApplyButtonState();
+          
           triggerButton.innerHTML = originalHTML;
           triggerButton.disabled = false;
+          
+          // Instantly highlight and allow them to review/Apply, or auto-apply! 
+          // Let's instantly commit geocoded location since they actively clicked "Detect"
+          changeGlobalCity(normalized);
           closeLocationModal();
           return;
         }
 
         // 2. Proximity Fallback: outside boundaries, identify closest supported city
         const nearestCity = getNearestCity(lat, lon);
-        changeGlobalCity(nearestCity);
+        tempSelectedCity = nearestCity;
 
-        // Display proximity banner
+        // Display proximity fallback warning banner inside the modal
         const alertTitle = document.getElementById('location-alert-title');
         const alertSub = document.getElementById('location-alert-sub');
         if (alertTitle && alertSub) {
@@ -314,8 +373,9 @@
           });
         }
 
-        // Re-render city selection grid to reflect the active city update
+        // Re-render city list and enable Apply
         renderCityGrid('');
+        updateApplyButtonState();
 
         triggerButton.innerHTML = originalHTML;
         triggerButton.disabled = false;
@@ -405,17 +465,24 @@
       });
     }
 
-    // 3. Connect the hero geolocator ("Use My Location" in explore bar) to the geolocation normalization core!
+    // 3. Connect the hero geolocator ("Use My Location" in explore bar)
     const heroDetectBtn = document.getElementById('use-location-btn');
     if (heroDetectBtn) {
-      // Clean previous listener if needed, or simply intercept it
+      // Intercept and bind
       heroDetectBtn.replaceWith(heroDetectBtn.cloneNode(true));
       const newHeroBtn = document.getElementById('use-location-btn');
       newHeroBtn.addEventListener('click', () => {
-        // Wire geolocation reverse-lookup with fallback nearest supported city directly in explore bar!
         triggerHeroLocationLookup(newHeroBtn);
       });
     }
+
+    // 4. Delegate click on empty state triggers
+    document.body.addEventListener('click', (e) => {
+      if (e.target.closest('.change-city-empty-trigger')) {
+        e.preventDefault();
+        openLocationModal();
+      }
+    });
   });
 
   function triggerHeroLocationLookup(buttonEl) {
@@ -445,10 +512,10 @@
         const normalized = normalizeCity(detectedName);
         const finalCity = normalized || getNearestCity(lat, lon);
 
-        // Save city
+        // Save city preference
         changeGlobalCity(finalCity);
         
-        // Show success visual in input
+        // Show success in search input
         const locInput = document.getElementById('location-input');
         if (locInput) {
           locInput.value = normalized 
@@ -463,11 +530,10 @@
           Location set`;
         buttonEl.disabled = false;
 
-        // If a proximity fallback happened, pop up our Selector Modal to show the alert toast clearly to the user!
+        // If fallback coordinates proximity check happened, popup modal selector to show toast warnings clearly
         if (!normalized) {
           openLocationModal();
           
-          // Re-populate alert banner in the modal overlay
           const alertBanner = document.getElementById('location-modal-alert');
           const alertTitle = document.getElementById('location-alert-title');
           const alertSub = document.getElementById('location-alert-sub');
